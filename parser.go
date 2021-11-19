@@ -40,7 +40,7 @@ type Step struct {
 	Timers      []Timer
 	Ingredients []Ingredient
 	Equipment   []Equipment
-	Comments    string
+	Comments    []string
 }
 
 type Metadata = map[string]string
@@ -82,7 +82,7 @@ func parseLine(line string, recipe *Recipe) error {
 		if err != nil {
 			return err
 		}
-		recipe.Steps = append(recipe.Steps, Step{Comments: commentLine})
+		recipe.Steps = append(recipe.Steps, Step{Comments: []string{commentLine}})
 	} else if strings.HasPrefix(line, METADATA_LINE_PREFIX) {
 		key, value, err := parseMetadata(line)
 		if err != nil {

@@ -24,7 +24,7 @@ func TestParseString(t *testing.T) {
 			&Recipe{
 				Steps: []Step{
 					{
-						Comments: "This is a comment",
+						Comments: []string{"This is a comment"},
 					},
 				},
 				Metadata: make(Metadata),
