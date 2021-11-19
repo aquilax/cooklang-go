@@ -89,12 +89,15 @@ func ParseStream(s io.Reader) (*Recipe, error) {
 		make(map[string]string),
 	}
 	var line string
+	lineNumeber := 0
 	for scanner.Scan() {
+		lineNumeber += 1
 		line = scanner.Text()
+
 		if strings.TrimSpace(line) != "" {
 			err := parseLine(line, &recipe)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("line %d: %w", lineNumeber, err)
 			}
 		}
 	}
