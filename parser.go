@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -14,6 +15,7 @@ const (
 	METADATA_VALUE_SEPARATOR = ":"
 	PREFIX_INGREDIENT        = '@'
 	PREFIX_EQUIPMENT         = '#'
+	PREFIX_TIMER             = '~'
 )
 
 type Equipment struct {
@@ -50,6 +52,15 @@ type Recipe struct {
 	Metadata Metadata
 }
 
+func ParseFile(fileName string) (*Recipe, error) {
+	f, err := os.Open(fileName)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return ParseStream(bufio.NewReader(f))
+}
+
 func ParseString(s string) (*Recipe, error) {
 	if s == "" {
 		return nil, fmt.Errorf("recipe string must not be empty")
@@ -66,7 +77,7 @@ func ParseStream(s io.Reader) (*Recipe, error) {
 	var line string
 	for scanner.Scan() {
 		line = scanner.Text()
-		if line != "" {
+		if strings.TrimSpace(line) != "" {
 			err := parseLine(line, &recipe)
 			if err != nil {
 				return nil, err
@@ -124,11 +135,12 @@ func parseRecipe(line string) (*Step, error) {
 	var skipNext int
 	var ingredient *Ingredient
 	var equipment *Equipment
+	var timer *Timer
 	for index, ch := range line {
 		if skipIndex > index {
 			continue
 		}
-		if ch == '@' {
+		if ch == PREFIX_INGREDIENT {
 			// ingredient ahead
 			ingredient, skipNext, err = getIngredient(line[index:])
 			if err != nil {
@@ -137,7 +149,7 @@ func parseRecipe(line string) (*Step, error) {
 			skipIndex = index + skipNext
 			step.Ingredients = append(step.Ingredients, *ingredient)
 			directions.WriteString((*ingredient).Name)
-		} else if ch == '#' {
+		} else if ch == PREFIX_EQUIPMENT {
 			// equipment ahead
 			equipment, skipNext, err = getEquipment(line[index:])
 			if err != nil {
@@ -146,8 +158,15 @@ func parseRecipe(line string) (*Step, error) {
 			skipIndex = index + skipNext
 			step.Equipment = append(step.Equipment, *equipment)
 			directions.WriteString((*equipment).Name)
-		} else if ch == '~' {
+		} else if ch == PREFIX_TIMER {
 			//timer ahead
+			timer, skipNext, err = getTimer(line[index:])
+			if err != nil {
+				return nil, err
+			}
+			skipIndex = index + skipNext
+			step.Timers = append(step.Timers, *timer)
+			directions.WriteString(fmt.Sprintf("%v %s", (*timer).Duration, (*timer).Unit))
 		} else {
 			// raw string
 			directions.WriteRune(ch)
@@ -158,25 +177,51 @@ func parseRecipe(line string) (*Step, error) {
 }
 
 func getEquipment(line string) (*Equipment, int, error) {
-	endIndex := findNodeEndIndex(PREFIX_EQUIPMENT, line)
-	equipment, error := getEquipmentFromRawString(line[1:endIndex])
-	return equipment, endIndex, error
+	endIndex := findNodeEndIndex(line)
+	equipment, err := getEquipmentFromRawString(line[1:endIndex])
+	return equipment, endIndex, err
 }
 
 func getIngredient(line string) (*Ingredient, int, error) {
-	endIndex := findNodeEndIndex(PREFIX_INGREDIENT, line)
-	ingredient, error := getIngredientFromRawString(line[1:endIndex])
-	return ingredient, endIndex, error
+	endIndex := findNodeEndIndex(line)
+	ingredient, err := getIngredientFromRawString(line[1:endIndex])
+	return ingredient, endIndex, err
 }
 
-func findNodeEndIndex(prefix rune, line string) int {
+func getTimer(line string) (*Timer, int, error) {
+	endIndex := findNodeEndIndex(line)
+	timer, err := getTimerFromRawString(line[2 : endIndex-1])
+	return timer, endIndex, err
+}
+
+func getFloat(s string) (float64, error) {
+	index := strings.Index(s, "/")
+	if index == -1 {
+		return strconv.ParseFloat(s, 64)
+	}
+	var err error
+	var numerator int
+	var denominator int
+	numerator, err = strconv.Atoi(s[:index])
+	if err != nil {
+		return 0, err
+	}
+
+	denominator, err = strconv.Atoi(s[index+1:])
+	if err != nil {
+		return 0, err
+	}
+	return float64(numerator) / float64(denominator), nil
+}
+
+func findNodeEndIndex(line string) int {
 	endIndex := -1
 
 	for index, ch := range line {
 		if index == 0 {
 			continue
 		}
-		if ch == prefix && endIndex == -1 {
+		if (ch == PREFIX_EQUIPMENT || ch == PREFIX_INGREDIENT || ch == PREFIX_TIMER) && endIndex == -1 {
 			break
 		}
 		if ch == '}' {
@@ -208,13 +253,13 @@ func getIngredientFromRawString(s string) (*Ingredient, error) {
 func getAmount(s string) (*IngredientAmount, error) {
 	index := strings.Index(s, "%")
 	if index == -1 {
-		f, err := strconv.ParseFloat(s, 64)
+		f, err := getFloat(s)
 		if err != nil {
 			return nil, err
 		}
 		return &IngredientAmount{Quantity: f}, nil
 	}
-	f, err := strconv.ParseFloat(s[:index], 64)
+	f, err := getFloat(s[:index])
 	if err != nil {
 		return nil, err
 	}
@@ -223,4 +268,16 @@ func getAmount(s string) (*IngredientAmount, error) {
 
 func getEquipmentFromRawString(s string) (*Equipment, error) {
 	return &Equipment{strings.TrimRight(s, "{}")}, nil
+}
+
+func getTimerFromRawString(s string) (*Timer, error) {
+	index := strings.Index(s, "%")
+	if index == -1 {
+		return nil, fmt.Errorf("invalid timer syntax: %s", s)
+	}
+	f, err := getFloat(s[:index])
+	if err != nil {
+		return nil, err
+	}
+	return &Timer{Duration: f, Unit: s[index+1:]}, nil
 }
