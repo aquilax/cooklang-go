@@ -13,6 +13,7 @@ const (
 	METADATA_LINE_PREFIX     = ">>"
 	METADATA_VALUE_SEPARATOR = ":"
 	PREFIX_INGREDIENT        = '@'
+	PREFIX_EQUIPMENT         = '#'
 )
 
 type Equipment struct {
@@ -122,11 +123,13 @@ func parseRecipe(line string) (*Step, error) {
 	var err error
 	var skipNext int
 	var ingredient *Ingredient
+	var equipment *Equipment
 	for index, ch := range line {
 		if skipIndex > index {
 			continue
 		}
 		if ch == '@' {
+			// ingredient ahead
 			ingredient, skipNext, err = getIngredient(line[index:])
 			if err != nil {
 				return nil, err
@@ -134,9 +137,15 @@ func parseRecipe(line string) (*Step, error) {
 			skipIndex = index + skipNext
 			step.Ingredients = append(step.Ingredients, *ingredient)
 			directions.WriteString((*ingredient).Name)
-			// ingredient ahead
 		} else if ch == '#' {
 			// equipment ahead
+			equipment, skipNext, err = getEquipment(line[index:])
+			if err != nil {
+				return nil, err
+			}
+			skipIndex = index + skipNext
+			step.Equipment = append(step.Equipment, *equipment)
+			directions.WriteString((*equipment).Name)
 		} else if ch == '~' {
 			//timer ahead
 		} else {
@@ -146,6 +155,12 @@ func parseRecipe(line string) (*Step, error) {
 	}
 	step.Directions = directions.String()
 	return &step, nil
+}
+
+func getEquipment(line string) (*Equipment, int, error) {
+	endIndex := findNodeEndIndex(PREFIX_EQUIPMENT, line)
+	equipment, error := getEquipmentFromRawString(line[1:endIndex])
+	return equipment, endIndex, error
 }
 
 func getIngredient(line string) (*Ingredient, int, error) {
@@ -204,4 +219,8 @@ func getAmount(s string) (*IngredientAmount, error) {
 		return nil, err
 	}
 	return &IngredientAmount{Quantity: f, Unit: s[index+1:]}, nil
+}
+
+func getEquipmentFromRawString(s string) (*Equipment, error) {
+	return &Equipment{strings.TrimRight(s, "{}")}, nil
 }

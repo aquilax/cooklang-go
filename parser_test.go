@@ -73,6 +73,25 @@ func TestParseString(t *testing.T) {
 			},
 			false,
 		},
+		{
+			"Parses equipment",
+			"Place the beacon on the #stove and mix with a #standing mixer{}.",
+			&Recipe{
+				Steps: []Step{
+					{
+						Directions:  "Place the beacon on the stove and mix with a standing mixer.",
+						Ingredients: []Ingredient{},
+						Timers:      []Timer{},
+						Equipment: []Equipment{
+							{Name: "stove"},
+							{Name: "standing mixer"},
+						},
+					},
+				},
+				Metadata: make(Metadata),
+			},
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
