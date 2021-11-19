@@ -1,3 +1,5 @@
+// Package cooklang provides a parser for .cook defined recipes as defined in
+// https://cooklang.org/docs/spec/
 package cooklang
 
 import (
@@ -10,33 +12,38 @@ import (
 )
 
 const (
-	COMMENTS_LINE_PREFIX     = "--"
-	METADATA_LINE_PREFIX     = ">>"
-	METADATA_VALUE_SEPARATOR = ":"
-	PREFIX_INGREDIENT        = '@'
-	PREFIX_Cookware          = '#'
-	PREFIX_TIMER             = '~'
+	commentsLinePrefix     = "--"
+	metadataLinePrefix     = ">>"
+	metadataValueSeparator = ":"
+	prefixIngredient       = '@'
+	prefixCookware         = '#'
+	prefixTimer            = '~'
 )
 
+// Cookware represents a cookware item
 type Cookware struct {
 	Name string
 }
 
+// IngredientAmount represents the amount required of an ingredient
 type IngredientAmount struct {
 	Quantity float64
 	Unit     string
 }
 
+// Ingredient represents a recipe ingredient
 type Ingredient struct {
 	Name   string
 	Amount IngredientAmount
 }
 
+// Timer represents a time duration
 type Timer struct {
 	Duration float64
 	Unit     string
 }
 
+// Step represents a recipe step
 type Step struct {
 	Directions  string
 	Timers      []Timer
@@ -45,13 +52,16 @@ type Step struct {
 	Comments    []string
 }
 
+// Metadata contains key value map of metadata
 type Metadata = map[string]string
 
+// Recipe contains a cooklang defined recipe
 type Recipe struct {
 	Steps    []Step
 	Metadata Metadata
 }
 
+// ParseFile parses a cooklang recipe file and returns the recipe or an error
 func ParseFile(fileName string) (*Recipe, error) {
 	f, err := os.Open(fileName)
 	if err != nil {
@@ -61,6 +71,7 @@ func ParseFile(fileName string) (*Recipe, error) {
 	return ParseStream(bufio.NewReader(f))
 }
 
+// ParseFile parses a cooklang recipe string and returns the recipe or an error
 func ParseString(s string) (*Recipe, error) {
 	if s == "" {
 		return nil, fmt.Errorf("recipe string must not be empty")
@@ -68,6 +79,7 @@ func ParseString(s string) (*Recipe, error) {
 	return ParseStream(strings.NewReader(s))
 }
 
+// ParseFile parses a cooklang recipe text stream and returns the recipe or an error
 func ParseStream(s io.Reader) (*Recipe, error) {
 	scanner := bufio.NewScanner(s)
 	recipe := Recipe{
@@ -88,13 +100,13 @@ func ParseStream(s io.Reader) (*Recipe, error) {
 }
 
 func parseLine(line string, recipe *Recipe) error {
-	if strings.HasPrefix(line, COMMENTS_LINE_PREFIX) {
+	if strings.HasPrefix(line, commentsLinePrefix) {
 		commentLine, err := parseSingleLineComment(line)
 		if err != nil {
 			return err
 		}
 		recipe.Steps = append(recipe.Steps, Step{Comments: []string{commentLine}})
-	} else if strings.HasPrefix(line, METADATA_LINE_PREFIX) {
+	} else if strings.HasPrefix(line, metadataLinePrefix) {
 		key, value, err := parseMetadata(line)
 		if err != nil {
 			return err
@@ -116,7 +128,7 @@ func parseSingleLineComment(line string) (string, error) {
 
 func parseMetadata(line string) (string, string, error) {
 	metadataLine := strings.TrimSpace(line[2:])
-	index := strings.Index(metadataLine, METADATA_VALUE_SEPARATOR)
+	index := strings.Index(metadataLine, metadataValueSeparator)
 	if index < 1 {
 		return "", "", fmt.Errorf("invalid metadata: %s", metadataLine)
 	}
@@ -140,7 +152,7 @@ func parseRecipe(line string) (*Step, error) {
 		if skipIndex > index {
 			continue
 		}
-		if ch == PREFIX_INGREDIENT {
+		if ch == prefixIngredient {
 			// ingredient ahead
 			ingredient, skipNext, err = getIngredient(line[index:])
 			if err != nil {
@@ -149,7 +161,7 @@ func parseRecipe(line string) (*Step, error) {
 			skipIndex = index + skipNext
 			step.Ingredients = append(step.Ingredients, *ingredient)
 			directions.WriteString((*ingredient).Name)
-		} else if ch == PREFIX_Cookware {
+		} else if ch == prefixCookware {
 			// Cookware ahead
 			Cookware, skipNext, err = getCookware(line[index:])
 			if err != nil {
@@ -158,7 +170,7 @@ func parseRecipe(line string) (*Step, error) {
 			skipIndex = index + skipNext
 			step.Cookware = append(step.Cookware, *Cookware)
 			directions.WriteString((*Cookware).Name)
-		} else if ch == PREFIX_TIMER {
+		} else if ch == prefixTimer {
 			//timer ahead
 			timer, skipNext, err = getTimer(line[index:])
 			if err != nil {
@@ -221,7 +233,7 @@ func findNodeEndIndex(line string) int {
 		if index == 0 {
 			continue
 		}
-		if (ch == PREFIX_Cookware || ch == PREFIX_INGREDIENT || ch == PREFIX_TIMER) && endIndex == -1 {
+		if (ch == prefixCookware || ch == prefixIngredient || ch == prefixTimer) && endIndex == -1 {
 			break
 		}
 		if ch == '}' {
