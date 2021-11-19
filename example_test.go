@@ -7,7 +7,7 @@ import (
 	"github.com/aquilax/cooklang-go"
 )
 
-func ExampleCooklang_ParseString() {
+func ExampleParseString() {
 	recipe := `>> servings: 6
 
 Make 6 pizza balls using @tipo zero flour{820%g}, @water{533%ml}, @salt{24.6%g} and @fresh yeast{1.6%g}. Put in a #fridge for ~{2%days}.
