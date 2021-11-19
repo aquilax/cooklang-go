@@ -24,34 +24,34 @@ const (
 
 // Cookware represents a cookware item
 type Cookware struct {
-	Name string
+	Name string // cookware name
 }
 
 // IngredientAmount represents the amount required of an ingredient
 type IngredientAmount struct {
-	Quantity float64
-	Unit     string
+	Quantity float64 // quantity of the ingredient
+	Unit     string  // optional ingredient unit
 }
 
 // Ingredient represents a recipe ingredient
 type Ingredient struct {
-	Name   string
-	Amount IngredientAmount
+	Name   string           // name of the ingredient
+	Amount IngredientAmount // optional ingredient amount (default: 1)
 }
 
 // Timer represents a time duration
 type Timer struct {
-	Duration float64
-	Unit     string
+	Duration float64 // duration of the timer
+	Unit     string  // time unit of the duration
 }
 
 // Step represents a recipe step
 type Step struct {
-	Directions  string
-	Timers      []Timer
-	Ingredients []Ingredient
-	Cookware    []Cookware
-	Comments    []string
+	Directions  string       // step directions as plain text
+	Timers      []Timer      // list of timers in the step
+	Ingredients []Ingredient // list of ingredients used in the step
+	Cookware    []Cookware   // list of cookware used in the step
+	Comments    []string     // list of comments
 }
 
 // Metadata contains key value map of metadata
@@ -59,8 +59,8 @@ type Metadata = map[string]string
 
 // Recipe contains a cooklang defined recipe
 type Recipe struct {
-	Steps    []Step
-	Metadata Metadata
+	Steps    []Step   // list of steps for the recipe
+	Metadata Metadata // metadata of the recipe
 }
 
 // ParseFile parses a cooklang recipe file and returns the recipe or an error
@@ -73,7 +73,7 @@ func ParseFile(fileName string) (*Recipe, error) {
 	return ParseStream(bufio.NewReader(f))
 }
 
-// ParseFile parses a cooklang recipe string and returns the recipe or an error
+// ParseString parses a cooklang recipe string and returns the recipe or an error
 func ParseString(s string) (*Recipe, error) {
 	if s == "" {
 		return nil, fmt.Errorf("recipe string must not be empty")
@@ -81,7 +81,7 @@ func ParseString(s string) (*Recipe, error) {
 	return ParseStream(strings.NewReader(s))
 }
 
-// ParseFile parses a cooklang recipe text stream and returns the recipe or an error
+// ParseStream parses a cooklang recipe text stream and returns the recipe or an error
 func ParseStream(s io.Reader) (*Recipe, error) {
 	scanner := bufio.NewScanner(s)
 	recipe := Recipe{
@@ -91,7 +91,7 @@ func ParseStream(s io.Reader) (*Recipe, error) {
 	var line string
 	lineNumeber := 0
 	for scanner.Scan() {
-		lineNumeber += 1
+		lineNumeber++
 		line = scanner.Text()
 
 		if strings.TrimSpace(line) != "" {
