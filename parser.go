@@ -241,7 +241,7 @@ func findNodeEndIndex(line string) int {
 func getIngredientFromRawString(s string) (*Ingredient, error) {
 	index := strings.Index(s, "{")
 	if index == -1 {
-		return &Ingredient{Name: s}, nil
+		return &Ingredient{Name: s, Amount: IngredientAmount{Quantity: 1}}, nil
 	}
 	amount, err := getAmount(s[index+1 : len(s)-1])
 	if err != nil {
@@ -251,6 +251,9 @@ func getIngredientFromRawString(s string) (*Ingredient, error) {
 }
 
 func getAmount(s string) (*IngredientAmount, error) {
+	if s == "" {
+		return &IngredientAmount{Quantity: 1}, nil
+	}
 	index := strings.Index(s, "%")
 	if index == -1 {
 		f, err := getFloat(s)
