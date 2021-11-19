@@ -14,11 +14,11 @@ const (
 	METADATA_LINE_PREFIX     = ">>"
 	METADATA_VALUE_SEPARATOR = ":"
 	PREFIX_INGREDIENT        = '@'
-	PREFIX_EQUIPMENT         = '#'
+	PREFIX_Cookware          = '#'
 	PREFIX_TIMER             = '~'
 )
 
-type Equipment struct {
+type Cookware struct {
 	Name string
 }
 
@@ -41,7 +41,7 @@ type Step struct {
 	Directions  string
 	Timers      []Timer
 	Ingredients []Ingredient
-	Equipment   []Equipment
+	Cookware    []Cookware
 	Comments    []string
 }
 
@@ -127,14 +127,14 @@ func parseRecipe(line string) (*Step, error) {
 	step := Step{
 		Timers:      make([]Timer, 0),
 		Ingredients: make([]Ingredient, 0),
-		Equipment:   make([]Equipment, 0),
+		Cookware:    make([]Cookware, 0),
 	}
 	skipIndex := -1
 	var directions strings.Builder
 	var err error
 	var skipNext int
 	var ingredient *Ingredient
-	var equipment *Equipment
+	var Cookware *Cookware
 	var timer *Timer
 	for index, ch := range line {
 		if skipIndex > index {
@@ -149,15 +149,15 @@ func parseRecipe(line string) (*Step, error) {
 			skipIndex = index + skipNext
 			step.Ingredients = append(step.Ingredients, *ingredient)
 			directions.WriteString((*ingredient).Name)
-		} else if ch == PREFIX_EQUIPMENT {
-			// equipment ahead
-			equipment, skipNext, err = getEquipment(line[index:])
+		} else if ch == PREFIX_Cookware {
+			// Cookware ahead
+			Cookware, skipNext, err = getCookware(line[index:])
 			if err != nil {
 				return nil, err
 			}
 			skipIndex = index + skipNext
-			step.Equipment = append(step.Equipment, *equipment)
-			directions.WriteString((*equipment).Name)
+			step.Cookware = append(step.Cookware, *Cookware)
+			directions.WriteString((*Cookware).Name)
 		} else if ch == PREFIX_TIMER {
 			//timer ahead
 			timer, skipNext, err = getTimer(line[index:])
@@ -176,10 +176,10 @@ func parseRecipe(line string) (*Step, error) {
 	return &step, nil
 }
 
-func getEquipment(line string) (*Equipment, int, error) {
+func getCookware(line string) (*Cookware, int, error) {
 	endIndex := findNodeEndIndex(line)
-	equipment, err := getEquipmentFromRawString(line[1:endIndex])
-	return equipment, endIndex, err
+	Cookware, err := getCookwareFromRawString(line[1:endIndex])
+	return Cookware, endIndex, err
 }
 
 func getIngredient(line string) (*Ingredient, int, error) {
@@ -221,7 +221,7 @@ func findNodeEndIndex(line string) int {
 		if index == 0 {
 			continue
 		}
-		if (ch == PREFIX_EQUIPMENT || ch == PREFIX_INGREDIENT || ch == PREFIX_TIMER) && endIndex == -1 {
+		if (ch == PREFIX_Cookware || ch == PREFIX_INGREDIENT || ch == PREFIX_TIMER) && endIndex == -1 {
 			break
 		}
 		if ch == '}' {
@@ -269,8 +269,8 @@ func getAmount(s string) (*IngredientAmount, error) {
 	return &IngredientAmount{Quantity: f, Unit: s[index+1:]}, nil
 }
 
-func getEquipmentFromRawString(s string) (*Equipment, error) {
-	return &Equipment{strings.TrimRight(s, "{}")}, nil
+func getCookwareFromRawString(s string) (*Cookware, error) {
+	return &Cookware{strings.TrimRight(s, "{}")}, nil
 }
 
 func getTimerFromRawString(s string) (*Timer, error) {
