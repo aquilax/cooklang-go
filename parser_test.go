@@ -176,6 +176,23 @@ Put in an #oven for ~{4%minutes}.`,
 			},
 			false,
 		},
+		{
+			"Parses block comments",
+			"Text [- with block comment -] rules",
+			&Recipe{
+				Steps: []Step{
+					{
+						Directions:  "Text  rules",
+						Comments:    []string{"with block comment"},
+						Timers:      []Timer{},
+						Ingredients: []Ingredient{},
+						Cookware:    []Cookware{},
+					},
+				},
+				Metadata: make(Metadata),
+			},
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

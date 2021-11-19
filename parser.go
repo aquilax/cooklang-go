@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 const (
@@ -18,6 +19,7 @@ const (
 	prefixIngredient       = '@'
 	prefixCookware         = '#'
 	prefixTimer            = '~'
+	prefixBlockComment     = '['
 )
 
 // Cookware represents a cookware item
@@ -135,6 +137,11 @@ func parseMetadata(line string) (string, string, error) {
 	return strings.TrimSpace(metadataLine[:index]), strings.TrimSpace(metadataLine[index+1:]), nil
 }
 
+func peek(s string) rune {
+	r, _ := utf8.DecodeRuneInString(s)
+	return r
+}
+
 func parseRecipe(line string) (*Step, error) {
 	step := Step{
 		Timers:      make([]Timer, 0),
@@ -148,6 +155,7 @@ func parseRecipe(line string) (*Step, error) {
 	var ingredient *Ingredient
 	var Cookware *Cookware
 	var timer *Timer
+	var comment string
 	for index, ch := range line {
 		if skipIndex > index {
 			continue
@@ -161,7 +169,9 @@ func parseRecipe(line string) (*Step, error) {
 			skipIndex = index + skipNext
 			step.Ingredients = append(step.Ingredients, *ingredient)
 			directions.WriteString((*ingredient).Name)
-		} else if ch == prefixCookware {
+			continue
+		}
+		if ch == prefixCookware {
 			// Cookware ahead
 			Cookware, skipNext, err = getCookware(line[index:])
 			if err != nil {
@@ -170,7 +180,9 @@ func parseRecipe(line string) (*Step, error) {
 			skipIndex = index + skipNext
 			step.Cookware = append(step.Cookware, *Cookware)
 			directions.WriteString((*Cookware).Name)
-		} else if ch == prefixTimer {
+			continue
+		}
+		if ch == prefixTimer {
 			//timer ahead
 			timer, skipNext, err = getTimer(line[index:])
 			if err != nil {
@@ -179,10 +191,23 @@ func parseRecipe(line string) (*Step, error) {
 			skipIndex = index + skipNext
 			step.Timers = append(step.Timers, *timer)
 			directions.WriteString(fmt.Sprintf("%v %s", (*timer).Duration, (*timer).Unit))
-		} else {
-			// raw string
-			directions.WriteRune(ch)
+			continue
 		}
+		if ch == prefixBlockComment {
+			nextRune := peek(line[index+1:])
+			if nextRune == '-' {
+				// block comment ahead
+				comment, skipNext, err = getBlockComment(line[index:])
+				if err != nil {
+					return nil, err
+				}
+				skipIndex = index + skipNext
+				step.Comments = append(step.Comments, comment)
+				continue
+			}
+		}
+		// raw string
+		directions.WriteRune(ch)
 	}
 	step.Directions = directions.String()
 	return &step, nil
@@ -204,6 +229,14 @@ func getTimer(line string) (*Timer, int, error) {
 	endIndex := findNodeEndIndex(line)
 	timer, err := getTimerFromRawString(line[2 : endIndex-1])
 	return timer, endIndex, err
+}
+
+func getBlockComment(s string) (string, int, error) {
+	index := strings.Index(s, "-]")
+	if index == -1 {
+		return "", 0, fmt.Errorf("invalid block comment")
+	}
+	return strings.TrimSpace(s[2:index]), index + 2, nil
 }
 
 func getFloat(s string) (float64, error) {
@@ -233,7 +266,7 @@ func findNodeEndIndex(line string) int {
 		if index == 0 {
 			continue
 		}
-		if (ch == prefixCookware || ch == prefixIngredient || ch == prefixTimer) && endIndex == -1 {
+		if (ch == prefixCookware || ch == prefixIngredient || ch == prefixTimer || ch == prefixBlockComment) && endIndex == -1 {
 			break
 		}
 		if ch == '}' {
