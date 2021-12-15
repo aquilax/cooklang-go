@@ -246,22 +246,23 @@ func getBlockComment(s string) (string, int, error) {
 func getFloat(s string) (bool, float64, error) {
 	var fl float64
 	var err error
-	if strings.TrimSpace(s) == "" {
+	trimmedValue := strings.TrimSpace(s)
+	if trimmedValue == "" {
 		return true, 0, nil
 	}
-	index := strings.Index(s, "/")
+	index := strings.Index(trimmedValue, "/")
 	if index == -1 {
-		fl, err = strconv.ParseFloat(s, 64)
+		fl, err = strconv.ParseFloat(trimmedValue, 64)
 		return err != nil, fl, err
 	}
 	var numerator int
 	var denominator int
-	numerator, err = strconv.Atoi(s[:index])
+	numerator, err = strconv.Atoi(strings.TrimSpace(trimmedValue[:index]))
 	if err != nil {
 		return true, 0, err
 	}
 
-	denominator, err = strconv.Atoi(s[index+1:])
+	denominator, err = strconv.Atoi(strings.TrimSpace(trimmedValue[index+1:]))
 	if err != nil {
 		return true, 0, err
 	}
@@ -306,7 +307,7 @@ func getIngredientFromRawString(s string) (*Ingredient, error) {
 
 func getAmount(s string) (*IngredientAmount, error) {
 	if s == "" {
-		return &IngredientAmount{Quantity: 1}, nil
+		return &IngredientAmount{Quantity: 0, IsEmpty: true}, nil
 	}
 	index := strings.Index(s, "%")
 	if index == -1 {
@@ -337,7 +338,7 @@ func getTimerFromRawString(s string) (*Timer, error) {
 		return nil, err
 	}
 	if isEmpty {
-		return nil, fmt.Errorf("missing timer value: %s", s)
+		return &Timer{Duration: 0, Unit: s[index+1:]}, nil
 	}
 	return &Timer{Duration: f, Unit: s[index+1:]}, nil
 }
