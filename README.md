@@ -34,6 +34,7 @@ Put in an #oven for ~{4%minutes}.`
 	//         {
 	//           "Name": "tipo zero flour",
 	//           "Amount": {
+	//             "IsEmpty": false,
 	//             "Quantity": 820,
 	//             "Unit": "g"
 	//           }
@@ -41,6 +42,7 @@ Put in an #oven for ~{4%minutes}.`
 	//         {
 	//           "Name": "water",
 	//           "Amount": {
+	//             "IsEmpty": false,
 	//             "Quantity": 533,
 	//             "Unit": "ml"
 	//           }
@@ -48,6 +50,7 @@ Put in an #oven for ~{4%minutes}.`
 	//         {
 	//           "Name": "salt",
 	//           "Amount": {
+	//             "IsEmpty": false,
 	//             "Quantity": 24.6,
 	//             "Unit": "g"
 	//           }
@@ -55,6 +58,7 @@ Put in an #oven for ~{4%minutes}.`
 	//         {
 	//           "Name": "fresh yeast",
 	//           "Amount": {
+	//             "IsEmpty": false,
 	//             "Quantity": 1.6,
 	//             "Unit": "g"
 	//           }
@@ -98,6 +102,7 @@ Put in an #oven for ~{4%minutes}.`
 	//         {
 	//           "Name": "chopped tomato",
 	//           "Amount": {
+	//             "IsEmpty": false,
 	//             "Quantity": 3,
 	//             "Unit": "cans"
 	//           }
@@ -105,6 +110,7 @@ Put in an #oven for ~{4%minutes}.`
 	//         {
 	//           "Name": "garlic",
 	//           "Amount": {
+	//             "IsEmpty": false,
 	//             "Quantity": 3,
 	//             "Unit": "cloves"
 	//           }
@@ -112,6 +118,7 @@ Put in an #oven for ~{4%minutes}.`
 	//         {
 	//           "Name": "dried oregano",
 	//           "Amount": {
+	//             "IsEmpty": false,
 	//             "Quantity": 3,
 	//             "Unit": "tbsp"
 	//           }
@@ -131,6 +138,7 @@ Put in an #oven for ~{4%minutes}.`
 	//         {
 	//           "Name": "fresh basil",
 	//           "Amount": {
+	//             "IsEmpty": false,
 	//             "Quantity": 18,
 	//             "Unit": "leaves"
 	//           }
@@ -138,6 +146,7 @@ Put in an #oven for ~{4%minutes}.`
 	//         {
 	//           "Name": "parma ham",
 	//           "Amount": {
+	//             "IsEmpty": false,
 	//             "Quantity": 3,
 	//             "Unit": "packs"
 	//           }
@@ -145,6 +154,7 @@ Put in an #oven for ~{4%minutes}.`
 	//         {
 	//           "Name": "mozzarella",
 	//           "Amount": {
+	//             "IsEmpty": false,
 	//             "Quantity": 3,
 	//             "Unit": "packs"
 	//           }

@@ -29,6 +29,7 @@ type Cookware struct {
 
 // IngredientAmount represents the amount required of an ingredient
 type IngredientAmount struct {
+	IsEmpty  bool    // true if the amount is empty
 	Quantity float64 // quantity of the ingredient
 	Unit     string  // optional ingredient unit
 }
@@ -242,24 +243,29 @@ func getBlockComment(s string) (string, int, error) {
 	return strings.TrimSpace(s[2:index]), index + 2, nil
 }
 
-func getFloat(s string) (float64, error) {
+func getFloat(s string) (bool, float64, error) {
+	var fl float64
+	var err error
+	if strings.TrimSpace(s) == "" {
+		return true, 0, nil
+	}
 	index := strings.Index(s, "/")
 	if index == -1 {
-		return strconv.ParseFloat(s, 64)
+		fl, err = strconv.ParseFloat(s, 64)
+		return err != nil, fl, err
 	}
-	var err error
 	var numerator int
 	var denominator int
 	numerator, err = strconv.Atoi(s[:index])
 	if err != nil {
-		return 0, err
+		return true, 0, err
 	}
 
 	denominator, err = strconv.Atoi(s[index+1:])
 	if err != nil {
-		return 0, err
+		return true, 0, err
 	}
-	return float64(numerator) / float64(denominator), nil
+	return false, float64(numerator) / float64(denominator), nil
 }
 
 func findNodeEndIndex(line string) int {
@@ -304,17 +310,17 @@ func getAmount(s string) (*IngredientAmount, error) {
 	}
 	index := strings.Index(s, "%")
 	if index == -1 {
-		f, err := getFloat(s)
+		isEmpty, f, err := getFloat(s)
 		if err != nil {
 			return nil, err
 		}
-		return &IngredientAmount{Quantity: f}, nil
+		return &IngredientAmount{Quantity: f, IsEmpty: isEmpty}, nil
 	}
-	f, err := getFloat(s[:index])
+	isEmpty, f, err := getFloat(s[:index])
 	if err != nil {
 		return nil, err
 	}
-	return &IngredientAmount{Quantity: f, Unit: s[index+1:]}, nil
+	return &IngredientAmount{Quantity: f, Unit: s[index+1:], IsEmpty: isEmpty}, nil
 }
 
 func getCookwareFromRawString(s string) (*Cookware, error) {
@@ -326,9 +332,12 @@ func getTimerFromRawString(s string) (*Timer, error) {
 	if index == -1 {
 		return nil, fmt.Errorf("invalid timer syntax: %s", s)
 	}
-	f, err := getFloat(s[:index])
+	isEmpty, f, err := getFloat(s[:index])
 	if err != nil {
 		return nil, err
+	}
+	if isEmpty {
+		return nil, fmt.Errorf("missing timer value: %s", s)
 	}
 	return &Timer{Duration: f, Unit: s[index+1:]}, nil
 }
