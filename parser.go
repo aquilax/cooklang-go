@@ -29,9 +29,10 @@ type Cookware struct {
 
 // IngredientAmount represents the amount required of an ingredient
 type IngredientAmount struct {
-	IsEmpty  bool    // true if the amount is empty
-	Quantity float64 // quantity of the ingredient
-	Unit     string  // optional ingredient unit
+	IsNumeric   bool    // true if the amount is numeric
+	Quantity    float64 // quantity of the ingredient
+	QuantityRaw string  // quantity of the ingredient as raw text
+	Unit        string  // optional ingredient unit
 }
 
 // Ingredient represents a recipe ingredient
@@ -64,6 +65,20 @@ type Recipe struct {
 	Metadata Metadata // metadata of the recipe
 }
 
+func (r Recipe) String() string {
+	var sb strings.Builder
+	for k, v := range r.Metadata {
+		sb.WriteString(fmt.Sprintf("%s %s: %s\n", metadataLinePrefix, k, v))
+	}
+	if len(r.Metadata) > 0 {
+		sb.WriteString("\n")
+	}
+	for _, s := range r.Steps {
+		sb.WriteString(fmt.Sprintf("%s \n\n", s.Directions))
+	}
+	return sb.String()
+}
+
 // ParseFile parses a cooklang recipe file and returns the recipe or an error
 func ParseFile(fileName string) (*Recipe, error) {
 	f, err := os.Open(fileName)
@@ -90,15 +105,15 @@ func ParseStream(s io.Reader) (*Recipe, error) {
 		make(map[string]string),
 	}
 	var line string
-	lineNumeber := 0
+	lineNumber := 0
 	for scanner.Scan() {
-		lineNumeber++
+		lineNumber++
 		line = scanner.Text()
 
 		if strings.TrimSpace(line) != "" {
 			err := parseLine(line, &recipe)
 			if err != nil {
-				return nil, fmt.Errorf("line %d: %w", lineNumeber, err)
+				return nil, fmt.Errorf("line %d: %w", lineNumber, err)
 			}
 		}
 	}
@@ -248,25 +263,25 @@ func getFloat(s string) (bool, float64, error) {
 	var err error
 	trimmedValue := strings.TrimSpace(s)
 	if trimmedValue == "" {
-		return true, 0, nil
+		return false, 0, nil
 	}
 	index := strings.Index(trimmedValue, "/")
 	if index == -1 {
 		fl, err = strconv.ParseFloat(trimmedValue, 64)
-		return err != nil, fl, err
+		return err == nil, fl, err
 	}
 	var numerator int
 	var denominator int
 	numerator, err = strconv.Atoi(strings.TrimSpace(trimmedValue[:index]))
 	if err != nil {
-		return true, 0, err
+		return false, 0, err
 	}
 
 	denominator, err = strconv.Atoi(strings.TrimSpace(trimmedValue[index+1:]))
 	if err != nil {
-		return true, 0, err
+		return false, 0, err
 	}
-	return false, float64(numerator) / float64(denominator), nil
+	return true, float64(numerator) / float64(denominator), nil
 }
 
 func findNodeEndIndex(line string) int {
@@ -307,21 +322,15 @@ func getIngredientFromRawString(s string) (*Ingredient, error) {
 
 func getAmount(s string) (*IngredientAmount, error) {
 	if s == "" {
-		return &IngredientAmount{Quantity: 0, IsEmpty: true}, nil
+		return &IngredientAmount{Quantity: 0, QuantityRaw: "", IsNumeric: false}, nil
 	}
 	index := strings.Index(s, "%")
 	if index == -1 {
-		isEmpty, f, err := getFloat(s)
-		if err != nil {
-			return nil, err
-		}
-		return &IngredientAmount{Quantity: f, IsEmpty: isEmpty}, nil
+		isNumeric, f, _ := getFloat(s)
+		return &IngredientAmount{Quantity: f, QuantityRaw: strings.TrimSpace(s), IsNumeric: isNumeric}, nil
 	}
-	isEmpty, f, err := getFloat(s[:index])
-	if err != nil {
-		return nil, err
-	}
-	return &IngredientAmount{Quantity: f, Unit: s[index+1:], IsEmpty: isEmpty}, nil
+	isNumeric, f, _ := getFloat(s[:index])
+	return &IngredientAmount{Quantity: f, QuantityRaw: strings.TrimSpace(s[:index]), Unit: strings.TrimSpace(s[index+1:]), IsNumeric: isNumeric}, nil
 }
 
 func getCookwareFromRawString(s string) (*Cookware, error) {
@@ -333,11 +342,11 @@ func getTimerFromRawString(s string) (*Timer, error) {
 	if index == -1 {
 		return nil, fmt.Errorf("invalid timer syntax: %s", s)
 	}
-	isEmpty, f, err := getFloat(s[:index])
+	isNumeric, f, err := getFloat(s[:index])
 	if err != nil {
 		return nil, err
 	}
-	if isEmpty {
+	if !isNumeric {
 		return &Timer{Duration: 0, Unit: s[index+1:]}, nil
 	}
 	return &Timer{Duration: f, Unit: s[index+1:]}, nil

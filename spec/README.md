@@ -3,5 +3,5 @@
 `canonical.json` generated from the yaml spec using:
 
 ```sh
-cat canonical.yaml | yq > canonical.json
+curl -s https://raw.githubusercontent.com/cooklang/spec/main/tests/canonical.yaml | yq > canonical.json
 ```
