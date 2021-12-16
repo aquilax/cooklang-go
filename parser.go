@@ -74,8 +74,12 @@ func (r Recipe) String() string {
 	if len(r.Metadata) > 0 {
 		sb.WriteString("\n")
 	}
-	for _, s := range r.Steps {
-		sb.WriteString(fmt.Sprintf("%s \n\n", s.Directions))
+	steps := len(r.Steps)
+	for i, s := range r.Steps {
+		sb.WriteString(fmt.Sprintln(s.Directions))
+		if i != steps-1 {
+			sb.WriteString("\n")
+		}
 	}
 	return sb.String()
 }
