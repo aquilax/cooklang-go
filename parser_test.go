@@ -115,13 +115,8 @@ func TestParseString(t *testing.T) {
 					{
 						Directions:  "Place the beacon in the oven for 20 minutes.",
 						Ingredients: []Ingredient{},
-						Timers: []Timer{
-							{
-								20.00,
-								"minutes",
-							},
-						},
-						Cookware: []Cookware{},
+						Timers:      []Timer{{"", 20.00, "minutes"}},
+						Cookware:    []Cookware{},
 					},
 				},
 				Metadata: make(Metadata),
@@ -276,6 +271,55 @@ func Test_findIngredient(t *testing.T) {
 			}
 			if got != tt.endIndex {
 				t.Errorf("findNodeEndIndex() got1 = %v, want %v", got, tt.endIndex)
+			}
+		})
+	}
+}
+
+func Test_getTimer(t *testing.T) {
+	type args struct {
+		line string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *Timer
+		wantErr bool
+	}{
+		{
+			"Gets named timer",
+			args{
+				"~potato{42%minutes}",
+			},
+			&Timer{
+				"potato",
+				42,
+				"minutes",
+			},
+			false,
+		},
+		{
+			"Gets unn-named timer",
+			args{
+				"~{42%minutes}",
+			},
+			&Timer{
+				"",
+				42,
+				"minutes",
+			},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, _, err := getTimer(tt.args.line)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getTimer() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getTimer() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

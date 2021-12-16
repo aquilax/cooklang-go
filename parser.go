@@ -43,6 +43,7 @@ type Ingredient struct {
 
 // Timer represents a time duration
 type Timer struct {
+	Name     string  // name of the timer
 	Duration float64 // duration of the timer
 	Unit     string  // time unit of the duration
 }
@@ -246,7 +247,7 @@ func getIngredient(line string) (*Ingredient, int, error) {
 
 func getTimer(line string) (*Timer, int, error) {
 	endIndex := findNodeEndIndex(line)
-	timer, err := getTimerFromRawString(line[2 : endIndex-1])
+	timer, err := getTimerFromRawString(line[1:endIndex])
 	return timer, endIndex, err
 }
 
@@ -338,7 +339,13 @@ func getCookwareFromRawString(s string) (*Cookware, error) {
 }
 
 func getTimerFromRawString(s string) (*Timer, error) {
-	index := strings.Index(s, "%")
+	name := ""
+	index := strings.Index(s, "{")
+	if index > -1 {
+		name = strings.TrimSpace(s[:index])
+		s = s[index+1:]
+	}
+	index = strings.Index(s, "%")
 	if index == -1 {
 		return nil, fmt.Errorf("invalid timer syntax: %s", s)
 	}
@@ -347,7 +354,7 @@ func getTimerFromRawString(s string) (*Timer, error) {
 		return nil, err
 	}
 	if !isNumeric {
-		return &Timer{Duration: 0, Unit: s[index+1:]}, nil
+		return &Timer{Name: name, Duration: 0, Unit: s[index+1 : len(s)-1]}, nil
 	}
-	return &Timer{Duration: f, Unit: s[index+1:]}, nil
+	return &Timer{Name: name, Duration: f, Unit: s[index+1 : len(s)-1]}, nil
 }
