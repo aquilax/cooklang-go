@@ -52,11 +52,11 @@ func TestParseString(t *testing.T) {
 						Ingredients: []Ingredient{
 							{
 								Name:   "bacon strips",
-								Amount: IngredientAmount{false, 1.0, "kg"},
+								Amount: IngredientAmount{true, 1.0, "1", "kg"},
 							},
 							{
 								Name:   "syrup",
-								Amount: IngredientAmount{false, 1.2, "tbsp"},
+								Amount: IngredientAmount{true, 1.2, "1.2", "tbsp"},
 							},
 						},
 						Timers:   []Timer{},
@@ -77,7 +77,7 @@ func TestParseString(t *testing.T) {
 						Ingredients: []Ingredient{
 							{
 								Name:   "1000 island dressing",
-								Amount: IngredientAmount{true, 0.0, ""},
+								Amount: IngredientAmount{false, 0.0, "", ""},
 							},
 						},
 						Timers:   []Timer{},
@@ -88,7 +88,6 @@ func TestParseString(t *testing.T) {
 			},
 			false,
 		},
-
 		{
 			"Parses Cookware",
 			"Place the beacon on the #stove and mix with a #standing mixer{}.",
@@ -109,7 +108,7 @@ func TestParseString(t *testing.T) {
 			false,
 		},
 		{
-			"Parses timers",
+			"Parses Timers",
 			"Place the beacon in the oven for ~{20%minutes}.",
 			&Recipe{
 				Steps: []Step{
@@ -148,10 +147,10 @@ Put in an #oven for ~{4%minutes}.`,
 						Directions: "Make 6 pizza balls using tipo zero flour, water, salt and fresh yeast. Put in a fridge for 2 days.",
 						Timers:     []Timer{{Duration: 2, Unit: "days"}},
 						Ingredients: []Ingredient{
-							{Name: "tipo zero flour", Amount: IngredientAmount{false, 820., "g"}},
-							{Name: "water", Amount: IngredientAmount{false, 533, "ml"}},
-							{Name: "salt", Amount: IngredientAmount{false, 24.6, "g"}},
-							{Name: "fresh yeast", Amount: IngredientAmount{false, 1.6, "g"}},
+							{Name: "tipo zero flour", Amount: IngredientAmount{true, 820., "820", "g"}},
+							{Name: "water", Amount: IngredientAmount{true, 533, "533", "ml"}},
+							{Name: "salt", Amount: IngredientAmount{true, 24.6, "24.6", "g"}},
+							{Name: "fresh yeast", Amount: IngredientAmount{true, 1.6, "1.6", "g"}},
 						},
 						Cookware: []Cookware{{Name: "fridge"}},
 					},
@@ -165,9 +164,9 @@ Put in an #oven for ~{4%minutes}.`,
 						Directions: "Make some tomato sauce with chopped tomato and garlic and dried oregano. Put on a pan and leave for 15 minutes occasionally stirring.",
 						Timers:     []Timer{{Duration: 15, Unit: "minutes"}},
 						Ingredients: []Ingredient{
-							{Name: "chopped tomato", Amount: IngredientAmount{false, 3, "cans"}},
-							{Name: "garlic", Amount: IngredientAmount{false, 3, "cloves"}},
-							{Name: "dried oregano", Amount: IngredientAmount{false, 3, "tbsp"}},
+							{Name: "chopped tomato", Amount: IngredientAmount{true, 3, "3", "cans"}},
+							{Name: "garlic", Amount: IngredientAmount{true, 3, "3", "cloves"}},
+							{Name: "dried oregano", Amount: IngredientAmount{true, 3, "3", "tbsp"}},
 						},
 						Cookware: []Cookware{{Name: "pan"}},
 					},
@@ -175,9 +174,9 @@ Put in an #oven for ~{4%minutes}.`,
 						Directions: "Make pizzas putting some tomato sauce with spoon on top of flattened dough. Add fresh basil, parma ham and mozzarella.",
 						Timers:     []Timer{},
 						Ingredients: []Ingredient{
-							{Name: "fresh basil", Amount: IngredientAmount{false, 18, "leaves"}},
-							{Name: "parma ham", Amount: IngredientAmount{false, 3, "packs"}},
-							{Name: "mozzarella", Amount: IngredientAmount{false, 3, "packs"}},
+							{Name: "fresh basil", Amount: IngredientAmount{true, 18, "18", "leaves"}},
+							{Name: "parma ham", Amount: IngredientAmount{true, 3, "3", "packs"}},
+							{Name: "mozzarella", Amount: IngredientAmount{true, 3, "3", "packs"}},
 						},
 						Cookware: []Cookware{{Name: "spoon"}},
 					},

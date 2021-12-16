@@ -67,7 +67,7 @@ func TestCanonical(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	skipCases := []string{"testQuantityAsText", "testQuantityDigitalString", "testTimerWithName"}
+	skipCases := []string{"testTimerWithName"}
 	sort.Strings(skipCases)
 	for name, spec := range (*specs).Tests {
 		t.Run(name, func(t *testing.T) {
