@@ -20,18 +20,18 @@ Make pizzas putting some tomato sauce with #spoon on top of flattened dough. Add
 
 Put in an #oven for ~{4%minutes}.`
 	r, _ := cooklang.ParseString(recipeIn)
-	fmt.Println(r)
+	fmt.Print(r)
 	// Output:
 	// >> servings: 6
-
+	//
 	// Make 6 pizza balls using tipo zero flour, water, salt and fresh yeast. Put in a fridge for 2 days.
-
+	//
 	// Set oven to max temperature and heat pizza stone for about 40 minutes.
-
+	//
 	// Make some tomato sauce with chopped tomato and garlic and dried oregano. Put on a pan and leave for 15 minutes occasionally stirring.
-
+	//
 	// Make pizzas putting some tomato sauce with spoon on top of flattened dough. Add fresh basil, parma ham and mozzarella.
-
+	//
 	// Put in an oven for 4 minutes.
 }
 
