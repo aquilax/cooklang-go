@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 4,
   "tests": {
     "testBasicDirection": {
       "source": "Add a bit of chilli\n",
@@ -350,22 +350,6 @@
         "metadata": []
       }
     },
-    "testIngridentImplicitQuantity": {
-      "source": "@chilli{%items}\n",
-      "result": {
-        "steps": [
-          [
-            {
-              "type": "ingredient",
-              "name": "chilli",
-              "quantity": "",
-              "units": "items"
-            }
-          ]
-        ],
-        "metadata": []
-      }
-    },
     "testIngridentImplicitUnits": {
       "source": "@chilli{3}\n",
       "result": {
@@ -687,26 +671,6 @@
               "type": "timer",
               "quantity": 10,
               "units": "minutes",
-              "name": ""
-            }
-          ]
-        ],
-        "metadata": []
-      }
-    },
-    "testEmptyTimer": {
-      "source": "Fry for ~{%mins}\n",
-      "result": {
-        "steps": [
-          [
-            {
-              "type": "text",
-              "value": "Fry for "
-            },
-            {
-              "type": "timer",
-              "quantity": 0,
-              "units": "mins",
               "name": ""
             }
           ]
