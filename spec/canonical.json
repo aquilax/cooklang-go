@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "tests": {
     "testBasicDirection": {
       "source": "Add a bit of chilli\n",
@@ -12,14 +12,14 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testComments": {
       "source": "-- testing comments\n",
       "result": {
         "steps": [],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testCommentsAfterIngredients": {
@@ -45,7 +45,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testCommentsWithIngredients": {
@@ -61,7 +61,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testDirectionsWithDegrees": {
@@ -75,7 +75,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testDirectionsWithNumbers": {
@@ -89,7 +89,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testDirectionWithIngrident": {
@@ -133,7 +133,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testEquipmentMultipleWords": {
@@ -148,11 +148,11 @@
             {
               "type": "cookware",
               "name": "frying pan",
-              "quantity": ""
+              "quantity": 1
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testEquipmentMultipleWordsWithLeadingNumber": {
@@ -167,11 +167,11 @@
             {
               "type": "cookware",
               "name": "7-inch nonstick frying pan",
-              "quantity": ""
+              "quantity": 1
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testEquipmentMultipleWordsWithSpaces": {
@@ -186,11 +186,11 @@
             {
               "type": "cookware",
               "name": "frying pan",
-              "quantity": ""
+              "quantity": 1
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testEquipmentOneWord": {
@@ -205,7 +205,7 @@
             {
               "type": "cookware",
               "name": "pan",
-              "quantity": ""
+              "quantity": 1
             },
             {
               "type": "text",
@@ -213,7 +213,52 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
+      }
+    },
+    "testEquipmentQuantity": {
+      "source": "#frying pan{2}\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "cookware",
+              "name": "frying pan",
+              "quantity": 2
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testEquipmentQuantityOneWord": {
+      "source": "#frying pan{three}\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "cookware",
+              "name": "frying pan",
+              "quantity": "three"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testEquipmentQuantityMultipleWords": {
+      "source": "#frying pan{two small}\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "cookware",
+              "name": "frying pan",
+              "quantity": "two small"
+            }
+          ]
+        ],
+        "metadata": {}
       }
     },
     "testFractions": {
@@ -229,7 +274,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testFractionsInDirections": {
@@ -243,7 +288,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testFractionsLike": {
@@ -259,7 +304,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testFractionsWithSpaces": {
@@ -275,7 +320,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testIngredientMultipleWordsWithLeadingNumber": {
@@ -295,7 +340,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testIngredientWithEmoji": {
@@ -315,7 +360,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testIngridentExplicitUnits": {
@@ -331,7 +376,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testIngridentExplicitUnitsWithSpaces": {
@@ -347,7 +392,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testIngridentImplicitUnits": {
@@ -363,7 +408,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testIngridentNoUnits": {
@@ -379,7 +424,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testIngridentNoUnitsNotOnlyString": {
@@ -395,7 +440,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testIngridentWithNumbers": {
@@ -411,7 +456,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testIngridentWithoutStopper": {
@@ -431,7 +476,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testMetadata": {
@@ -454,7 +499,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testMetadataMultiwordKey": {
@@ -492,7 +537,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testMultipleLines": {
@@ -518,7 +563,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testMultiWordIngridentNoAmount": {
@@ -534,7 +579,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testMutipleIngridentsWithoutStopper": {
@@ -560,7 +605,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testQuantityAsText": {
@@ -576,7 +621,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testQuantityDigitalString": {
@@ -592,7 +637,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testServings": {
@@ -615,7 +660,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testTimerDecimal": {
@@ -635,7 +680,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testTimerFractional": {
@@ -655,7 +700,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testTimerInteger": {
@@ -675,7 +720,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     },
     "testTimerWithName": {
@@ -695,7 +740,7 @@
             }
           ]
         ],
-        "metadata": []
+        "metadata": {}
       }
     }
   }
