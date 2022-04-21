@@ -70,7 +70,9 @@ func TestCanonical(t *testing.T) {
 	skipCases := []string{}
 	sort.Strings(skipCases)
 	for name, spec := range (*specs).Tests {
+		spec := spec
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			if contains(skipCases, name) {
 				t.Skip(name)
 			}

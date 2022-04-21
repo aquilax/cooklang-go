@@ -24,7 +24,10 @@ const (
 
 // Cookware represents a cookware item
 type Cookware struct {
-	Name string // cookware name
+	IsNumeric   bool    // true if the amount is numeric
+	Name        string  // cookware name
+	Quantity    float64 // quantity of the cookware
+	QuantityRaw string  // quantity of the cookware as raw text
 }
 
 // IngredientAmount represents the amount required of an ingredient
@@ -318,28 +321,42 @@ func getIngredientFromRawString(s string) (*Ingredient, error) {
 	if index == -1 {
 		return &Ingredient{Name: s, Amount: IngredientAmount{Quantity: 1}}, nil
 	}
-	amount, err := getAmount(s[index+1 : len(s)-1])
+	amount, err := getAmount(s[index+1:len(s)-1], 0)
 	if err != nil {
 		return nil, err
 	}
 	return &Ingredient{Name: s[:index], Amount: *amount}, nil
 }
 
-func getAmount(s string) (*IngredientAmount, error) {
+func getAmount(s string, defaultValue float64) (*IngredientAmount, error) {
 	if s == "" {
-		return &IngredientAmount{Quantity: 0, QuantityRaw: "", IsNumeric: false}, nil
+		return &IngredientAmount{Quantity: defaultValue, QuantityRaw: "", IsNumeric: false}, nil
 	}
 	index := strings.Index(s, "%")
 	if index == -1 {
 		isNumeric, f, _ := getFloat(s)
+		if !isNumeric {
+			f = defaultValue
+		}
 		return &IngredientAmount{Quantity: f, QuantityRaw: strings.TrimSpace(s), IsNumeric: isNumeric}, nil
 	}
 	isNumeric, f, _ := getFloat(s[:index])
+	if !isNumeric {
+		f = defaultValue
+	}
 	return &IngredientAmount{Quantity: f, QuantityRaw: strings.TrimSpace(s[:index]), Unit: strings.TrimSpace(s[index+1:]), IsNumeric: isNumeric}, nil
 }
 
 func getCookwareFromRawString(s string) (*Cookware, error) {
-	return &Cookware{strings.TrimRight(s, "{}")}, nil
+	index := strings.Index(s, "{")
+	if index == -1 {
+		return &Cookware{Name: s, Quantity: 1}, nil
+	}
+	amount, err := getAmount(s[index+1:len(s)-1], 1)
+	if err != nil {
+		return nil, err
+	}
+	return &Cookware{Name: s[:index], Quantity: amount.Quantity, IsNumeric: amount.IsNumeric, QuantityRaw: amount.QuantityRaw}, nil
 }
 
 func getTimerFromRawString(s string) (*Timer, error) {
