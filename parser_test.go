@@ -90,16 +90,19 @@ func TestParseString(t *testing.T) {
 		},
 		{
 			"Parses Cookware",
-			"Place the beacon on the #stove and mix with a #standing mixer{}.",
+			"Place the beacon on the #stove and mix with a #standing mixer{} or #fork{2}. Then use #frying pan{three} or #frying pot{two small}",
 			&Recipe{
 				Steps: []Step{
 					{
-						Directions:  "Place the beacon on the stove and mix with a standing mixer.",
+						Directions:  "Place the beacon on the stove and mix with a standing mixer or fork. Then use frying pan or frying pot",
 						Ingredients: []Ingredient{},
 						Timers:      []Timer{},
 						Cookware: []Cookware{
-							{Name: "stove"},
-							{Name: "standing mixer"},
+							{Name: "stove", Quantity: 1, IsNumeric: false},
+							{Name: "standing mixer", Quantity: 1, IsNumeric: false},
+							{Name: "fork", Quantity: 2, QuantityRaw: "2", IsNumeric: true},
+							{Name: "frying pan", Quantity: 1, QuantityRaw: "three", IsNumeric: false},
+							{Name: "frying pot", Quantity: 1, QuantityRaw: "two small", IsNumeric: false},
 						},
 					},
 				},
@@ -147,13 +150,16 @@ Put in an #oven for ~{4%minutes}.`,
 							{Name: "salt", Amount: IngredientAmount{true, 24.6, "24.6", "g"}},
 							{Name: "fresh yeast", Amount: IngredientAmount{true, 1.6, "1.6", "g"}},
 						},
-						Cookware: []Cookware{{Name: "fridge"}},
+						Cookware: []Cookware{{Name: "fridge", Quantity: 1, IsNumeric: false, QuantityRaw: ""}},
 					},
 					{
 						Directions:  "Set oven to max temperature and heat pizza stone for about 40 minutes.",
 						Timers:      []Timer{{Duration: 40, Unit: "minutes"}},
 						Ingredients: []Ingredient{},
-						Cookware:    []Cookware{{Name: "oven"}, {Name: "pizza stone"}},
+						Cookware: []Cookware{
+							{Name: "oven", Quantity: 1, IsNumeric: false, QuantityRaw: ""},
+							{Name: "pizza stone", Quantity: 1, IsNumeric: false, QuantityRaw: ""},
+						},
 					},
 					{
 						Directions: "Make some tomato sauce with chopped tomato and garlic and dried oregano. Put on a pan and leave for 15 minutes occasionally stirring.",
@@ -163,7 +169,7 @@ Put in an #oven for ~{4%minutes}.`,
 							{Name: "garlic", Amount: IngredientAmount{true, 3, "3", "cloves"}},
 							{Name: "dried oregano", Amount: IngredientAmount{true, 3, "3", "tbsp"}},
 						},
-						Cookware: []Cookware{{Name: "pan"}},
+						Cookware: []Cookware{{Name: "pan", Quantity: 1, IsNumeric: false, QuantityRaw: ""}},
 					},
 					{
 						Directions: "Make pizzas putting some tomato sauce with spoon on top of flattened dough. Add fresh basil, parma ham and mozzarella.",
@@ -173,13 +179,13 @@ Put in an #oven for ~{4%minutes}.`,
 							{Name: "parma ham", Amount: IngredientAmount{true, 3, "3", "packs"}},
 							{Name: "mozzarella", Amount: IngredientAmount{true, 3, "3", "packs"}},
 						},
-						Cookware: []Cookware{{Name: "spoon"}},
+						Cookware: []Cookware{{Name: "spoon", Quantity: 1, IsNumeric: false, QuantityRaw: ""}},
 					},
 					{
 						Directions:  "Put in an oven for 4 minutes.",
 						Timers:      []Timer{{Duration: 4, Unit: "minutes"}},
 						Ingredients: []Ingredient{},
-						Cookware:    []Cookware{{Name: "oven"}},
+						Cookware:    []Cookware{{Name: "oven", Quantity: 1, IsNumeric: false, QuantityRaw: ""}},
 					},
 				},
 				Metadata: Metadata{"servings": "6"},
@@ -212,7 +218,7 @@ Put in an #oven for ~{4%minutes}.`,
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ParseString() = %v, want %v", got, tt.want)
+				t.Errorf("ParseString() = %+v, want %+v", got, tt.want)
 			}
 		})
 	}

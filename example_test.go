@@ -102,7 +102,10 @@ Put in an #oven for ~{4%minutes}.`
 	//       ],
 	//       "Cookware": [
 	//         {
-	//           "Name": "fridge"
+	//           "IsNumeric": false,
+	//           "Name": "fridge",
+	//           "Quantity": 1,
+	//           "QuantityRaw": ""
 	//         }
 	//       ],
 	//       "Comments": null
@@ -119,10 +122,16 @@ Put in an #oven for ~{4%minutes}.`
 	//       "Ingredients": [],
 	//       "Cookware": [
 	//         {
-	//           "Name": "oven"
+	//           "IsNumeric": false,
+	//           "Name": "oven",
+	//           "Quantity": 1,
+	//           "QuantityRaw": ""
 	//         },
 	//         {
-	//           "Name": "pizza stone"
+	//           "IsNumeric": false,
+	//           "Name": "pizza stone",
+	//           "Quantity": 1,
+	//           "QuantityRaw": ""
 	//         }
 	//       ],
 	//       "Comments": null
@@ -167,7 +176,10 @@ Put in an #oven for ~{4%minutes}.`
 	//       ],
 	//       "Cookware": [
 	//         {
-	//           "Name": "pan"
+	//           "IsNumeric": false,
+	//           "Name": "pan",
+	//           "Quantity": 1,
+	//           "QuantityRaw": ""
 	//         }
 	//       ],
 	//       "Comments": null
@@ -206,7 +218,10 @@ Put in an #oven for ~{4%minutes}.`
 	//       ],
 	//       "Cookware": [
 	//         {
-	//           "Name": "spoon"
+	//           "IsNumeric": false,
+	//           "Name": "spoon",
+	//           "Quantity": 1,
+	//           "QuantityRaw": ""
 	//         }
 	//       ],
 	//       "Comments": null
@@ -223,7 +238,10 @@ Put in an #oven for ~{4%minutes}.`
 	//       "Ingredients": [],
 	//       "Cookware": [
 	//         {
-	//           "Name": "oven"
+	//           "IsNumeric": false,
+	//           "Name": "oven",
+	//           "Quantity": 1,
+	//           "QuantityRaw": ""
 	//         }
 	//       ],
 	//       "Comments": null
