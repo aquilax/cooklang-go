@@ -20,6 +20,7 @@ const (
 	prefixCookware         = '#'
 	prefixTimer            = '~'
 	prefixBlockComment     = '['
+	prefixInlineComment    = '-'
 )
 
 // Cookware represents a cookware item
@@ -233,10 +234,22 @@ func parseRecipe(line string) (*Step, error) {
 				continue
 			}
 		}
+		if ch == prefixInlineComment {
+			nextRune := peek(line[index+1:])
+			if nextRune == prefixInlineComment {
+				// end-line comment ahead
+				comment = strings.TrimSpace(line[index+len(commentsLinePrefix):])
+				if err != nil {
+					return nil, err
+				}
+				step.Comments = append(step.Comments, comment)
+				break
+			}
+		}
 		// raw string
 		directions.WriteRune(ch)
 	}
-	step.Directions = directions.String()
+	step.Directions = strings.TrimSpace(directions.String())
 	return &step, nil
 }
 

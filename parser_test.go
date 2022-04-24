@@ -13,6 +13,35 @@ func TestParseString(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			"Works with inline comments",
+			`-- Don't burn the roux!
+
+			Mash @potato{2%kg} until smooth -- alternatively, boil 'em first, then mash 'em, then stick 'em in a stew.`,
+			&Recipe{
+				Steps: []Step{
+					{
+						Comments: []string{
+							"Don't burn the roux!",
+						},
+					},
+					{
+						Ingredients: []Ingredient{
+							{
+								Name:   "potato",
+								Amount: IngredientAmount{true, 2.0, "2", "kg"},
+							},
+						},
+						Timers:     []Timer{},
+						Cookware:   []Cookware{},
+						Directions: "Mash potato until smooth",
+						Comments:   []string{"alternatively, boil 'em first, then mash 'em, then stick 'em in a stew."},
+					},
+				},
+				Metadata: make(Metadata),
+			},
+			false,
+		},
+		{
 			"Empty string returns an error",
 			"",
 			nil,
