@@ -247,7 +247,7 @@ Put in an #oven for ~{4%minutes}.`,
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ParseString() = %+v, want %+v", got, tt.want)
+				t.Errorf("ParseString() = %#v, want %#v", got, tt.want)
 			}
 		})
 	}
