@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "tests": {
     "testBasicDirection": {
       "source": "Add a bit of chilli\n",
@@ -23,7 +23,7 @@
       }
     },
     "testCommentsAfterIngredients": {
-      "source": "@thyme{2%springs} -- testing comments\nand some text\n",
+      "source": "@thyme{2%sprigs} -- testing comments\nand some text\n",
       "result": {
         "steps": [
           [
@@ -31,7 +31,7 @@
               "type": "ingredient",
               "name": "thyme",
               "quantity": 2,
-              "units": "springs"
+              "units": "sprigs"
             },
             {
               "type": "text",
@@ -49,7 +49,7 @@
       }
     },
     "testCommentsWithIngredients": {
-      "source": "-- testing comments\n@thyme{2%springs}\n",
+      "source": "-- testing comments\n@thyme{2%sprigs}\n",
       "result": {
         "steps": [
           [
@@ -57,7 +57,7 @@
               "type": "ingredient",
               "name": "thyme",
               "quantity": 2,
-              "units": "springs"
+              "units": "sprigs"
             }
           ]
         ],
@@ -92,7 +92,7 @@
         "metadata": {}
       }
     },
-    "testDirectionWithIngrident": {
+    "testDirectionWithIngredient": {
       "source": "Add @chilli{3%items}, @ginger{10%g} and @milk{1%l}.\n",
       "result": {
         "steps": [
@@ -363,7 +363,7 @@
         "metadata": {}
       }
     },
-    "testIngridentExplicitUnits": {
+    "testIngredientExplicitUnits": {
       "source": "@chilli{3%items}\n",
       "result": {
         "steps": [
@@ -379,7 +379,7 @@
         "metadata": {}
       }
     },
-    "testIngridentExplicitUnitsWithSpaces": {
+    "testIngredientExplicitUnitsWithSpaces": {
       "source": "@chilli{ 3 % items }\n",
       "result": {
         "steps": [
@@ -395,7 +395,7 @@
         "metadata": {}
       }
     },
-    "testIngridentImplicitUnits": {
+    "testIngredientImplicitUnits": {
       "source": "@chilli{3}\n",
       "result": {
         "steps": [
@@ -411,7 +411,7 @@
         "metadata": {}
       }
     },
-    "testIngridentNoUnits": {
+    "testIngredientNoUnits": {
       "source": "@chilli\n",
       "result": {
         "steps": [
@@ -427,7 +427,7 @@
         "metadata": {}
       }
     },
-    "testIngridentNoUnitsNotOnlyString": {
+    "testIngredientNoUnitsNotOnlyString": {
       "source": "@5peppers\n",
       "result": {
         "steps": [
@@ -443,7 +443,7 @@
         "metadata": {}
       }
     },
-    "testIngridentWithNumbers": {
+    "testIngredientWithNumbers": {
       "source": "@tipo 00 flour{250%g}\n",
       "result": {
         "steps": [
@@ -459,7 +459,7 @@
         "metadata": {}
       }
     },
-    "testIngridentWithoutStopper": {
+    "testIngredientWithoutStopper": {
       "source": "@chilli cut into pieces\n",
       "result": {
         "steps": [
@@ -550,7 +550,7 @@
         }
       }
     },
-    "testMultiWordIngrident": {
+    "testMultiWordIngredient": {
       "source": "@hot chilli{3}\n",
       "result": {
         "steps": [
@@ -566,7 +566,7 @@
         "metadata": {}
       }
     },
-    "testMultiWordIngridentNoAmount": {
+    "testMultiWordIngredientNoAmount": {
       "source": "@hot chilli{}\n",
       "result": {
         "steps": [
@@ -582,7 +582,7 @@
         "metadata": {}
       }
     },
-    "testMutipleIngridentsWithoutStopper": {
+    "testMutipleIngredientsWithoutStopper": {
       "source": "@chilli cut into pieces and @garlic\n",
       "result": {
         "steps": [
@@ -609,7 +609,7 @@
       }
     },
     "testQuantityAsText": {
-      "source": "@thyme{few%springs}\n",
+      "source": "@thyme{few%sprigs}\n",
       "result": {
         "steps": [
           [
@@ -617,7 +617,7 @@
               "type": "ingredient",
               "name": "thyme",
               "quantity": "few",
-              "units": "springs"
+              "units": "sprigs"
             }
           ]
         ],
@@ -737,6 +737,330 @@
               "quantity": 42,
               "units": "minutes",
               "name": "potato"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testSingleWordTimer": {
+      "source": "Let it ~rest after plating\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "Let it "
+            },
+            {
+              "type": "timer",
+              "quantity": "",
+              "units": "",
+              "name": "rest"
+            },
+            {
+              "type": "text",
+              "value": " after plating"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testSingleWordTimerWithPunctuation": {
+      "source": "Let it ~rest, then serve\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "Let it "
+            },
+            {
+              "type": "timer",
+              "quantity": "",
+              "units": "",
+              "name": "rest"
+            },
+            {
+              "type": "text",
+              "value": ", then serve"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testSingleWordTimerWithUnicodePunctuation": {
+      "source": "Let it ~rest⸫ then serve\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "Let it "
+            },
+            {
+              "type": "timer",
+              "quantity": "",
+              "units": "",
+              "name": "rest"
+            },
+            {
+              "type": "text",
+              "value": "⸫ then serve"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testTimerWithUnicodeWhitespace": {
+      "source": "Let it ~rest then serve\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "Let it "
+            },
+            {
+              "type": "timer",
+              "quantity": "",
+              "units": "",
+              "name": "rest"
+            },
+            {
+              "type": "text",
+              "value": " then serve"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testInvalidMultiWordTimer": {
+      "source": "It is ~ {5}\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "It is ~ {5}"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testInvalidSingleWordTimer": {
+      "source": "It is ~ 5\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "It is ~ 5"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testSingleWordIngredientWithPunctuation": {
+      "source": "Add some @chilli, then serve\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "Add some "
+            },
+            {
+              "type": "ingredient",
+              "quantity": "some",
+              "units": "",
+              "name": "chilli"
+            },
+            {
+              "type": "text",
+              "value": ", then serve"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testSingleWordIngredientWithUnicodePunctuation": {
+      "source": "Add @chilli⸫ then bake\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "Add "
+            },
+            {
+              "type": "ingredient",
+              "quantity": "some",
+              "units": "",
+              "name": "chilli"
+            },
+            {
+              "type": "text",
+              "value": "⸫ then bake"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testIngredientWithUnicodeWhitespace": {
+      "source": "Add @chilli then bake\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "Add "
+            },
+            {
+              "type": "ingredient",
+              "quantity": "some",
+              "units": "",
+              "name": "chilli"
+            },
+            {
+              "type": "text",
+              "value": " then bake"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testInvalidMultiWordIngredient": {
+      "source": "Message @ example{}\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "Message @ example{}"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testInvalidSingleWordIngredient": {
+      "source": "Message me @ example\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "Message me @ example"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testSingleWordCookwareWithPunctuation": {
+      "source": "Place in #pot, then boil\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "Place in "
+            },
+            {
+              "type": "cookware",
+              "quantity": 1,
+              "units": "",
+              "name": "pot"
+            },
+            {
+              "type": "text",
+              "value": ", then boil"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testSingleWordCookwareWithUnicodePunctuation": {
+      "source": "Place in #pot⸫ then boil\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "Place in "
+            },
+            {
+              "type": "cookware",
+              "quantity": 1,
+              "units": "",
+              "name": "pot"
+            },
+            {
+              "type": "text",
+              "value": "⸫ then boil"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testCookwareWithUnicodeWhitespace": {
+      "source": "Add to #pot then boil\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "Add to "
+            },
+            {
+              "type": "cookware",
+              "quantity": 1,
+              "units": "",
+              "name": "pot"
+            },
+            {
+              "type": "text",
+              "value": " then boil"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testInvalidMultiWordCookware": {
+      "source": "Recipe # 10{}\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "Recipe # 10{}"
+            }
+          ]
+        ],
+        "metadata": {}
+      }
+    },
+    "testInvalidSingleWordCookware": {
+      "source": "Recipe # 5\n",
+      "result": {
+        "steps": [
+          [
+            {
+              "type": "text",
+              "value": "Recipe # 5"
             }
           ]
         ],
