@@ -381,7 +381,7 @@ func getTimerFromRawString(s string) (*Timer, error) {
 	}
 	index = strings.Index(s, "%")
 	if index == -1 {
-		return nil, fmt.Errorf("invalid timer syntax: %s", s)
+		return &Timer{Name: s, Duration: 0, Unit: ""}, nil
 	}
 	isNumeric, f, err := getFloat(s[:index])
 	if err != nil {
