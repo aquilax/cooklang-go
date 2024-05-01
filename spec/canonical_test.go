@@ -60,10 +60,8 @@ func TestCanonical(t *testing.T) {
 	}
 	skipCases := []string{}
 	skipResultChecks := []string{
-		"testInvalidSingleWordTimer",
-		"testInvalidSingleWordCookware",
 		"testQuantityAsText",
-		"testSingleWordCookwareWithUnicodePunctuation",
+		//"testSingleWordCookwareWithUnicodePunctuation",
 		"testSingleWordCookwareWithPunctuation",
 		"testIngredientNoUnits",
 		"testEquipmentQuantityMultipleWords",

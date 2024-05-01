@@ -372,61 +372,71 @@ func parseStepCB(line string, cb func(item any) (bool, error)) (string, error) {
 			continue
 		}
 		if ch == prefixIngredient {
-			if buffer.Len() > 0 {
-				if stop, err := cb(newText(buffer.String())); err != nil || stop {
+			nextRune := peek(line[index+1:])
+			if nextRune != ' ' {
+				if buffer.Len() > 0 {
+					if stop, err := cb(newText(buffer.String())); err != nil || stop {
+						return directions.String(), err
+					}
+					buffer.Reset()
+				}
+				// ingredient ahead
+				ingredient, skipNext, err = getIngredient(line[index:])
+				if err != nil {
 					return directions.String(), err
 				}
-				buffer.Reset()
+				skipIndex = index + skipNext
+				directions.WriteString((*ingredient).Name)
+				if stop, err := cb(*ingredient); err != nil || stop {
+					return directions.String(), err
+				}
+				continue
+
 			}
-			// ingredient ahead
-			ingredient, skipNext, err = getIngredient(line[index:])
-			if err != nil {
-				return directions.String(), err
-			}
-			skipIndex = index + skipNext
-			directions.WriteString((*ingredient).Name)
-			if stop, err := cb(*ingredient); err != nil || stop {
-				return directions.String(), err
-			}
-			continue
 		}
 		if ch == prefixCookware {
-			if buffer.Len() > 0 {
-				if stop, err := cb(newText(buffer.String())); err != nil || stop {
+			nextRune := peek(line[index+1:])
+			if nextRune != ' ' {
+				if buffer.Len() > 0 {
+					if stop, err := cb(newText(buffer.String())); err != nil || stop {
+						return directions.String(), err
+					}
+					buffer.Reset()
+				}
+				// Cookware ahead
+				cookware, skipNext, err = getCookware(line[index:])
+				if err != nil {
 					return directions.String(), err
 				}
-				buffer.Reset()
+				skipIndex = index + skipNext
+				directions.WriteString((*cookware).Name)
+				if stop, err := cb(*cookware); err != nil || stop {
+					return directions.String(), err
+				}
+				continue
 			}
-			// Cookware ahead
-			cookware, skipNext, err = getCookware(line[index:])
-			if err != nil {
-				return directions.String(), err
-			}
-			skipIndex = index + skipNext
-			directions.WriteString((*cookware).Name)
-			if stop, err := cb(*cookware); err != nil || stop {
-				return directions.String(), err
-			}
-			continue
 		}
 		if ch == prefixTimer {
-			if buffer.Len() > 0 {
-				if stop, err := cb(newText(buffer.String())); err != nil || stop {
+			nextRune := peek(line[index+1:])
+			if nextRune != ' ' {
+				if buffer.Len() > 0 {
+					if stop, err := cb(newText(buffer.String())); err != nil || stop {
+						return directions.String(), err
+					}
+					buffer.Reset()
+				}
+				//timer ahead
+				timer, skipNext, err = getTimer(line[index:])
+				if err != nil {
 					return directions.String(), err
 				}
-				buffer.Reset()
+				skipIndex = index + skipNext
+				directions.WriteString(fmt.Sprintf("%v %s", (*timer).Duration, (*timer).Unit))
+				if stop, err := cb(*timer); err != nil || stop {
+					return directions.String(), err
+				}
+				continue
 			}
-			//timer ahead
-			timer, skipNext, err = getTimer(line[index:])
-			if err != nil {
-				return directions.String(), err
-			}
-			skipIndex = index + skipNext
-			directions.WriteString(fmt.Sprintf("%v %s", (*timer).Duration, (*timer).Unit))
-			if stop, err := cb(*timer); err != nil || stop {
-				return directions.String(), err
-			}
-			continue
 		}
 		if ch == prefixBlockComment {
 			nextRune := peek(line[index+1:])
