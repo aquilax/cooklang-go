@@ -1,6 +1,6 @@
 module github.com/aquilax/cooklang-go
 
-go 1.18
+go 1.22.2
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
