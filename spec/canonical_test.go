@@ -2,12 +2,13 @@ package canonical_test
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"os"
-	"sort"
+	"slices"
 	"testing"
 
 	"github.com/aquilax/cooklang-go"
+	"github.com/stretchr/testify/assert"
 )
 
 type Result struct {
@@ -42,7 +43,7 @@ func loadSpecs(fileName string) (*SpecTests, error) {
 	}
 	defer jsonFile.Close()
 
-	b, _ := ioutil.ReadAll(jsonFile)
+	b, _ := io.ReadAll(jsonFile)
 
 	var result *SpecTests
 	err = json.Unmarshal(b, &result)
@@ -52,37 +53,61 @@ func loadSpecs(fileName string) (*SpecTests, error) {
 	return result, nil
 }
 
-func contains(s []string, searchterm string) bool {
-	i := sort.SearchStrings(s, searchterm)
-	return i < len(s) && s[i] == searchterm
-}
-
-func compareResult(got *cooklang.Recipe, want Result) error {
-	// To do check results
-	return nil
-}
-
 func TestCanonical(t *testing.T) {
 	specs, err := loadSpecs(specFileName)
 	if err != nil {
 		panic(err)
 	}
 	skipCases := []string{}
-	sort.Strings(skipCases)
+	skipResultChecks := []string{
+		"testQuantityAsText",
+		//"testSingleWordCookwareWithUnicodePunctuation",
+		"testSingleWordCookwareWithPunctuation",
+		"testIngredientNoUnits",
+		"testEquipmentQuantityMultipleWords",
+		"testIngredientWithEmoji",
+		"testSingleWordIngredientWithUnicodePunctuation",
+		"testMutipleIngredientsWithoutStopper",
+		"testTimerWithUnicodeWhitespace",
+		"testIngredientWithoutStopper",
+		"testSingleWordIngredientWithPunctuation",
+		"testSingleWordTimer",
+		"testSingleWordTimerWithUnicodePunctuation",
+		"testInvalidSingleWordIngredient",
+		"testInvalidMultiWordIngredient",
+		"testMultiWordIngredientNoAmount",
+		"testEquipmentQuantityOneWord",
+		"testQuantityDigitalString",
+		"testCookwareWithUnicodeWhitespace",
+		"testFractionsLike",
+		"testIngredientWithUnicodeWhitespace",
+		"testInvalidMultiWordTimer",
+		"testSingleWordTimerWithPunctuation",
+		"testIngredientMultipleWordsWithLeadingNumber",
+		"testIngredientNoUnitsNotOnlyString",
+		"testInvalidMultiWordCookware",
+	}
 	for name, spec := range (*specs).Tests {
 		name := name
 		spec := spec
 		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
 			t.Parallel()
-			if contains(skipCases, name) {
+			if slices.Contains(skipCases, name) {
 				t.Skip(name)
 			}
-			r, err := cooklang.ParseString(spec.Source)
-			if err != nil {
-				t.Errorf("%s ParseString returned %v", name, err)
-			}
-			if err = compareResult(r, spec.Result); err != nil {
-				t.Errorf("parseString() got = %v, want %v", r, spec.Result)
+			parserV2 := cooklang.NewParserV2(&cooklang.ParseV2Config{IgnoreTypes: []cooklang.ItemType{cooklang.ItemTypeComment}})
+
+			r, err := parserV2.ParseString(spec.Source)
+			assert.NoError(err)
+
+			if !slices.Contains(skipResultChecks, name) {
+				gotJson, err := json.Marshal(r)
+				assert.NoError(err)
+				expectJson, err := json.Marshal(spec.Result)
+				assert.NoError(err)
+
+				assert.JSONEq(string(expectJson), string(gotJson))
 			}
 		})
 	}

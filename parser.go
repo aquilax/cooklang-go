@@ -4,9 +4,11 @@ package cooklang
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -21,7 +23,22 @@ const (
 	prefixTimer            = '~'
 	prefixBlockComment     = '['
 	prefixInlineComment    = '-'
+
+	ItemTypeText       ItemType = "text"
+	ItemTypeComment    ItemType = "comment"
+	ItemTypeCookware   ItemType = "cookware"
+	ItemTypeIngredient ItemType = "ingredient"
+	ItemTypeTimer      ItemType = "timer"
+
+	CommentTypeLine    CommentType = 1
+	CommentTypeBlock   CommentType = 2
+	CommentTypeEndLine CommentType = 3
 )
+
+type ItemType string
+
+// CommentType defines what type is the comment
+type CommentType int
 
 // Cookware represents a cookware item
 type Cookware struct {
@@ -29,6 +46,20 @@ type Cookware struct {
 	Name        string  // cookware name
 	Quantity    float64 // quantity of the cookware
 	QuantityRaw string  // quantity of the cookware as raw text
+}
+
+type CookwareV2 struct {
+	Type     ItemType `json:"type"`
+	Name     string   `json:"name"`
+	Quantity float64  `json:"quantity"`
+}
+
+func (c Cookware) asCookwareV2() CookwareV2 {
+	return CookwareV2{
+		Type:     ItemTypeCookware,
+		Name:     c.Name,
+		Quantity: c.Quantity,
+	}
 }
 
 // IngredientAmount represents the amount required of an ingredient
@@ -45,11 +76,81 @@ type Ingredient struct {
 	Amount IngredientAmount // optional ingredient amount (default: 1)
 }
 
+type IngredientV2 struct {
+	Type     ItemType `json:"type"`
+	Name     string   `json:"name"`
+	Quantity float64  `json:"quantity"`
+	Units    string   `json:"units,omitempty"`
+}
+
+func (i Ingredient) asIngredientV2() IngredientV2 {
+	return IngredientV2{
+		Type:     ItemTypeIngredient,
+		Name:     i.Name,
+		Quantity: i.Amount.Quantity,
+		Units:    i.Amount.Unit,
+	}
+}
+
 // Timer represents a time duration
 type Timer struct {
 	Name     string  // name of the timer
 	Duration float64 // duration of the timer
 	Unit     string  // time unit of the duration
+}
+
+type TimerV2 struct {
+	Type     ItemType `json:"type"`
+	Name     string   `json:"name,omitempty"`
+	Quantity float64  `json:"quantity"`
+	Unit     string   `json:"units"`
+}
+
+func (t Timer) asTimerV2() TimerV2 {
+	return TimerV2{
+		Type:     ItemTypeTimer,
+		Name:     t.Name,
+		Quantity: t.Duration,
+		Unit:     t.Unit,
+	}
+}
+
+// Comment represents comment text
+type Comment struct {
+	Type  CommentType
+	Value string
+}
+
+type Text struct {
+	Value string
+}
+
+type TextV2 struct {
+	Type  ItemType `json:"type"`
+	Value string   `json:"value"`
+}
+
+func (t Text) asTextV2() TextV2 {
+	return TextV2{ItemTypeText, t.Value}
+}
+
+type jsonStep struct {
+	Type     string `json:"type"`
+	Value    string `json:"value,omitempty"`
+	Name     string `json:"name,omitempty"`
+	Quantity any    `json:"quantity,omitempty"`
+	Units    string `json:"units,omitempty"`
+}
+
+func (t *Text) MarshalJson() ([]byte, error) {
+	return json.Marshal(&jsonStep{
+		Type:  "text",
+		Value: t.Value,
+	})
+}
+
+func newText(v string) Text {
+	return Text{v}
 }
 
 // Step represents a recipe step
@@ -68,6 +169,22 @@ type Metadata = map[string]string
 type Recipe struct {
 	Steps    []Step   // list of steps for the recipe
 	Metadata Metadata // metadata of the recipe
+}
+
+type ParseV2Config struct {
+	IgnoreTypes []ItemType
+}
+
+type StepV2 []any
+
+// RecipeV2 contains a cooklang defined recipe
+type RecipeV2 struct {
+	Steps    []StepV2 `json:"steps"`    // list of steps for the recipe
+	Metadata Metadata `json:"metadata"` // metadata of the recipe
+}
+
+type ParserV2 struct {
+	config *ParseV2Config
 }
 
 func (r Recipe) String() string {
@@ -98,12 +215,32 @@ func ParseFile(fileName string) (*Recipe, error) {
 	return ParseStream(bufio.NewReader(f))
 }
 
+func (p *ParserV2) ParseFile(fileName string) (*RecipeV2, error) {
+	f, err := os.Open(fileName)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return p.ParseStream(bufio.NewReader(f))
+}
+
 // ParseString parses a cooklang recipe string and returns the recipe or an error
 func ParseString(s string) (*Recipe, error) {
 	if s == "" {
 		return nil, fmt.Errorf("recipe string must not be empty")
 	}
 	return ParseStream(strings.NewReader(s))
+}
+
+func (p *ParserV2) ParseString(s string) (*RecipeV2, error) {
+	if s == "" {
+		return nil, fmt.Errorf("recipe string must not be empty")
+	}
+	return p.ParseStream(strings.NewReader(s))
+}
+
+func NewParserV2(config *ParseV2Config) *ParserV2 {
+	return &ParserV2{config}
 }
 
 // ParseStream parses a cooklang recipe text stream and returns the recipe or an error
@@ -129,13 +266,38 @@ func ParseStream(s io.Reader) (*Recipe, error) {
 	return &recipe, nil
 }
 
+// ParseStream parses a cooklang recipe text stream and returns the recipe or an error
+func (p *ParserV2) ParseStream(s io.Reader) (*RecipeV2, error) {
+	scanner := bufio.NewScanner(s)
+	recipe := RecipeV2{
+		make([]StepV2, 0),
+		make(map[string]string),
+	}
+	var line string
+	lineNumber := 0
+	for scanner.Scan() {
+		lineNumber++
+		line = scanner.Text()
+
+		if strings.TrimSpace(line) != "" {
+			err := p.parseLine(line, &recipe)
+			if err != nil {
+				return nil, fmt.Errorf("line %d: %w", lineNumber, err)
+			}
+		}
+	}
+	return &recipe, nil
+}
+
 func parseLine(line string, recipe *Recipe) error {
 	if strings.HasPrefix(line, commentsLinePrefix) {
 		commentLine, err := parseSingleLineComment(line)
 		if err != nil {
 			return err
 		}
-		recipe.Steps = append(recipe.Steps, Step{Comments: []string{commentLine}})
+		recipe.Steps = append(recipe.Steps, Step{
+			Comments: []string{commentLine},
+		})
 	} else if strings.HasPrefix(line, metadataLinePrefix) {
 		key, value, err := parseMetadata(line)
 		if err != nil {
@@ -143,7 +305,32 @@ func parseLine(line string, recipe *Recipe) error {
 		}
 		recipe.Metadata[key] = value
 	} else {
-		step, err := parseRecipe(line)
+		step, err := parseRecipeLine(line)
+		if err != nil {
+			return err
+		}
+		recipe.Steps = append(recipe.Steps, *step)
+	}
+	return nil
+}
+
+func (p *ParserV2) parseLine(line string, recipe *RecipeV2) error {
+	if strings.HasPrefix(line, commentsLinePrefix) {
+		commentLine, err := parseSingleLineComment(line)
+		if err != nil {
+			return err
+		}
+		if !slices.Contains(p.config.IgnoreTypes, ItemTypeComment) {
+			recipe.Steps = append(recipe.Steps, StepV2{Comment{CommentTypeLine, commentLine}})
+		}
+	} else if strings.HasPrefix(line, metadataLinePrefix) {
+		key, value, err := parseMetadata(line)
+		if err != nil {
+			return err
+		}
+		recipe.Metadata[key] = value
+	} else {
+		step, err := p.parseRecipeLine(line)
 		if err != nil {
 			return err
 		}
@@ -170,86 +357,204 @@ func peek(s string) rune {
 	return r
 }
 
-func parseRecipe(line string) (*Step, error) {
-	step := Step{
-		Timers:      make([]Timer, 0),
-		Ingredients: make([]Ingredient, 0),
-		Cookware:    make([]Cookware, 0),
-	}
+func parseStepCB(line string, cb func(item any) (bool, error)) (string, error) {
 	skipIndex := -1
 	var directions strings.Builder
 	var err error
 	var skipNext int
 	var ingredient *Ingredient
-	var Cookware *Cookware
+	var cookware *Cookware
 	var timer *Timer
 	var comment string
+	var buffer strings.Builder
 	for index, ch := range line {
 		if skipIndex > index {
 			continue
 		}
 		if ch == prefixIngredient {
-			// ingredient ahead
-			ingredient, skipNext, err = getIngredient(line[index:])
-			if err != nil {
-				return nil, err
+			nextRune := peek(line[index+1:])
+			if nextRune != ' ' {
+				if buffer.Len() > 0 {
+					if stop, err := cb(newText(buffer.String())); err != nil || stop {
+						return directions.String(), err
+					}
+					buffer.Reset()
+				}
+				// ingredient ahead
+				ingredient, skipNext, err = getIngredient(line[index:])
+				if err != nil {
+					return directions.String(), err
+				}
+				skipIndex = index + skipNext
+				directions.WriteString((*ingredient).Name)
+				if stop, err := cb(*ingredient); err != nil || stop {
+					return directions.String(), err
+				}
+				continue
+
 			}
-			skipIndex = index + skipNext
-			step.Ingredients = append(step.Ingredients, *ingredient)
-			directions.WriteString((*ingredient).Name)
-			continue
 		}
 		if ch == prefixCookware {
-			// Cookware ahead
-			Cookware, skipNext, err = getCookware(line[index:])
-			if err != nil {
-				return nil, err
+			nextRune := peek(line[index+1:])
+			if nextRune != ' ' {
+				if buffer.Len() > 0 {
+					if stop, err := cb(newText(buffer.String())); err != nil || stop {
+						return directions.String(), err
+					}
+					buffer.Reset()
+				}
+				// Cookware ahead
+				cookware, skipNext, err = getCookware(line[index:])
+				if err != nil {
+					return directions.String(), err
+				}
+				skipIndex = index + skipNext
+				directions.WriteString((*cookware).Name)
+				if stop, err := cb(*cookware); err != nil || stop {
+					return directions.String(), err
+				}
+				continue
 			}
-			skipIndex = index + skipNext
-			step.Cookware = append(step.Cookware, *Cookware)
-			directions.WriteString((*Cookware).Name)
-			continue
 		}
 		if ch == prefixTimer {
-			//timer ahead
-			timer, skipNext, err = getTimer(line[index:])
-			if err != nil {
-				return nil, err
+			nextRune := peek(line[index+1:])
+			if nextRune != ' ' {
+				if buffer.Len() > 0 {
+					if stop, err := cb(newText(buffer.String())); err != nil || stop {
+						return directions.String(), err
+					}
+					buffer.Reset()
+				}
+				//timer ahead
+				timer, skipNext, err = getTimer(line[index:])
+				if err != nil {
+					return directions.String(), err
+				}
+				skipIndex = index + skipNext
+				directions.WriteString(fmt.Sprintf("%v %s", (*timer).Duration, (*timer).Unit))
+				if stop, err := cb(*timer); err != nil || stop {
+					return directions.String(), err
+				}
+				continue
 			}
-			skipIndex = index + skipNext
-			step.Timers = append(step.Timers, *timer)
-			directions.WriteString(fmt.Sprintf("%v %s", (*timer).Duration, (*timer).Unit))
-			continue
 		}
 		if ch == prefixBlockComment {
 			nextRune := peek(line[index+1:])
 			if nextRune == '-' {
+				if buffer.Len() > 0 {
+					if stop, err := cb(newText(buffer.String())); err != nil || stop {
+						return directions.String(), err
+					}
+					buffer.Reset()
+				}
 				// block comment ahead
 				comment, skipNext, err = getBlockComment(line[index:])
 				if err != nil {
-					return nil, err
+					return directions.String(), err
 				}
 				skipIndex = index + skipNext
-				step.Comments = append(step.Comments, comment)
+				if stop, err := cb(Comment{CommentTypeBlock, comment}); err != nil || stop {
+					return directions.String(), err
+				}
 				continue
 			}
 		}
 		if ch == prefixInlineComment {
 			nextRune := peek(line[index+1:])
 			if nextRune == prefixInlineComment {
+				if buffer.Len() > 0 {
+					if stop, err := cb(newText(buffer.String())); err != nil || stop {
+						return directions.String(), err
+					}
+					buffer.Reset()
+				}
 				// end-line comment ahead
 				comment = strings.TrimSpace(line[index+len(commentsLinePrefix):])
 				if err != nil {
-					return nil, err
+					return directions.String(), err
 				}
-				step.Comments = append(step.Comments, comment)
+				if stop, err := cb(Comment{CommentTypeEndLine, comment}); err != nil || stop {
+					return directions.String(), err
+				}
 				break
 			}
 		}
 		// raw string
+		buffer.WriteRune(ch)
 		directions.WriteRune(ch)
 	}
-	step.Directions = strings.TrimSpace(directions.String())
+	if buffer.Len() > 0 {
+		if stop, err := cb(newText(buffer.String())); err != nil || stop {
+			return directions.String(), err
+		}
+		buffer.Reset()
+	}
+	return strings.TrimSpace(directions.String()), nil
+}
+
+func parseRecipeLine(line string) (*Step, error) {
+	step := Step{
+		Timers:      make([]Timer, 0),
+		Ingredients: make([]Ingredient, 0),
+		Cookware:    make([]Cookware, 0),
+	}
+	var err error
+	step.Directions, err = parseStepCB(line, func(item any) (bool, error) {
+		switch v := item.(type) {
+		case Timer:
+			step.Timers = append(step.Timers, v)
+		case Ingredient:
+			step.Ingredients = append(step.Ingredients, v)
+		case Cookware:
+			step.Cookware = append(step.Cookware, v)
+		case Text:
+			//
+		case Comment:
+			step.Comments = append(step.Comments, v.Value)
+		default:
+			return true, fmt.Errorf("unknown type %T", v)
+		}
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &step, nil
+}
+
+func (p *ParserV2) parseRecipeLine(line string) (*StepV2, error) {
+	step := StepV2{}
+	var err error
+	_, err = parseStepCB(line, func(item any) (bool, error) {
+		switch v := item.(type) {
+		case Timer:
+			if !slices.Contains(p.config.IgnoreTypes, ItemTypeTimer) {
+				step = append(step, v.asTimerV2())
+			}
+		case Ingredient:
+			if !slices.Contains(p.config.IgnoreTypes, ItemTypeIngredient) {
+				step = append(step, v.asIngredientV2())
+			}
+		case Cookware:
+			if !slices.Contains(p.config.IgnoreTypes, ItemTypeCookware) {
+				step = append(step, v.asCookwareV2())
+			}
+		case Text:
+			if !slices.Contains(p.config.IgnoreTypes, ItemTypeText) {
+				step = append(step, v.asTextV2())
+			}
+		case Comment:
+			if !slices.Contains(p.config.IgnoreTypes, ItemTypeComment) {
+				step = append(step, v)
+			}
+		default:
+			return true, fmt.Errorf("unknown type %T", v)
+		}
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
 	return &step, nil
 }
 
