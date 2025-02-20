@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -163,7 +165,7 @@ type Step struct {
 }
 
 // Metadata contains key value map of metadata
-type Metadata = map[string]string
+type Metadata = map[string]any
 
 // Recipe contains a cooklang defined recipe
 type Recipe struct {
@@ -184,7 +186,9 @@ type RecipeV2 struct {
 }
 
 type ParserV2 struct {
-	config *ParseV2Config
+	config        *ParseV2Config
+	inFrontMatter bool
+	frontMatter   string
 }
 
 func (r Recipe) String() string {
@@ -240,7 +244,9 @@ func (p *ParserV2) ParseString(s string) (*RecipeV2, error) {
 }
 
 func NewParserV2(config *ParseV2Config) *ParserV2 {
-	return &ParserV2{config}
+	return &ParserV2{
+		config: config,
+	}
 }
 
 // ParseStream parses a cooklang recipe text stream and returns the recipe or an error
@@ -248,7 +254,7 @@ func ParseStream(s io.Reader) (*Recipe, error) {
 	scanner := bufio.NewScanner(s)
 	recipe := Recipe{
 		make([]Step, 0),
-		make(map[string]string),
+		make(map[string]any),
 	}
 	var line string
 	lineNumber := 0
@@ -271,7 +277,7 @@ func (p *ParserV2) ParseStream(s io.Reader) (*RecipeV2, error) {
 	scanner := bufio.NewScanner(s)
 	recipe := RecipeV2{
 		make([]StepV2, 0),
-		make(map[string]string),
+		make(map[string]any),
 	}
 	var line string
 	lineNumber := 0
@@ -315,7 +321,20 @@ func parseLine(line string, recipe *Recipe) error {
 }
 
 func (p *ParserV2) parseLine(line string, recipe *RecipeV2) error {
-	if strings.HasPrefix(line, commentsLinePrefix) {
+	line = strings.TrimRight(line, " ")
+
+	if line == "---" && !p.inFrontMatter {
+		p.inFrontMatter = true
+	} else if line == "---" && p.inFrontMatter {
+		p.inFrontMatter = false
+		y := strings.NewReader(p.frontMatter)
+		err := yaml.NewDecoder(y).Decode(recipe.Metadata)
+		if err != nil {
+			return fmt.Errorf("decoding yaml front matter: %w", err)
+		}
+	} else if p.inFrontMatter {
+		p.frontMatter = p.frontMatter + line + "\n"
+	} else if strings.HasPrefix(line, commentsLinePrefix) {
 		commentLine, err := parseSingleLineComment(line)
 		if err != nil {
 			return err
