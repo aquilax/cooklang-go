@@ -188,7 +188,7 @@ type RecipeV2 struct {
 type ParserV2 struct {
 	config        *ParseV2Config
 	inFrontMatter bool
-	frontMatter   string
+	frontMatter   strings.Builder
 }
 
 func (r Recipe) String() string {
@@ -321,19 +321,23 @@ func parseLine(line string, recipe *Recipe) error {
 }
 
 func (p *ParserV2) parseLine(line string, recipe *RecipeV2) error {
-	line = strings.TrimRight(line, " ")
 
-	if line == "---" && !p.inFrontMatter {
+	// be lenient with trailing spaces when detecting the front matter
+	// header/footer
+	rightTrimmedLine := strings.TrimRight(line, " ")
+
+	if rightTrimmedLine == "---" && !p.inFrontMatter {
 		p.inFrontMatter = true
-	} else if line == "---" && p.inFrontMatter {
+	} else if rightTrimmedLine == "---" && p.inFrontMatter {
 		p.inFrontMatter = false
-		y := strings.NewReader(p.frontMatter)
+		y := strings.NewReader(p.frontMatter.String())
 		err := yaml.NewDecoder(y).Decode(recipe.Metadata)
 		if err != nil {
 			return fmt.Errorf("decoding yaml front matter: %w", err)
 		}
 	} else if p.inFrontMatter {
-		p.frontMatter = p.frontMatter + line + "\n"
+		p.frontMatter.WriteString(line)
+		p.frontMatter.WriteString("\n")
 	} else if strings.HasPrefix(line, commentsLinePrefix) {
 		commentLine, err := parseSingleLineComment(line)
 		if err != nil {
