@@ -2,6 +2,7 @@ package cooklang
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -357,5 +358,99 @@ func Test_getTimer(t *testing.T) {
 				t.Errorf("getTimer() got = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestFrontMatter(t *testing.T) {
+	in := `---   
+title: food dish
+tags:
+  - vegan
+  - vegetarian
+  - delicious
+--- 
+
+Mash @banana{1%large} and eat it.`
+
+	r, err := NewParserV2(&ParseV2Config{}).ParseString(in)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	} else {
+		if len(r.Steps) != 1 {
+			t.Errorf("wrong steps - expected 1 got %d", len(r.Steps))
+		} else {
+
+		}
+		if len(r.Metadata) != 2 {
+			t.Errorf("wrong metadata - expected 2 got %d", len(r.Metadata))
+		} else {
+			if r.Metadata["title"] != "food dish" {
+				t.Error("wrong title")
+			}
+			t.Logf("%T => %#v", r.Metadata["tags"], r.Metadata["tags"])
+			if tags, ok := r.Metadata["tags"]; ok {
+				if tagsArray, ok := tags.([]any); ok {
+					if len(tagsArray) != 3 {
+						t.Errorf("wrong number of tags - expected 3 got %d", len(tagsArray))
+					} else {
+						if tagsArray[0] != "vegan" {
+							t.Error("0 index tag wrong")
+						}
+						if tagsArray[1] != "vegetarian" {
+							t.Error("1 index tag wrong")
+						}
+						if tagsArray[2] != "delicious" {
+							t.Error("2 index tag wrong")
+						}
+					}
+				} else {
+					t.Error("not right type for tags")
+				}
+			} else {
+				t.Error("tags field missing")
+			}
+		}
+	}
+}
+
+func TestBadFrontMatter(t *testing.T) {
+	in := `---   
+title: food dish
+invalid yaml :-)
+--- 
+
+Mash @banana{1%large} and eat it.`
+
+	_, err := NewParserV2(&ParseV2Config{}).ParseString(in)
+	if err == nil {
+		t.Error("expected parsing error")
+		t.FailNow()
+	} else {
+		exp := "decoding yaml front matter"
+		if !strings.Contains(err.Error(), exp) {
+			t.Errorf("wrong error, expected '%s' got '%s'", exp, err.Error())
+		}
+	}
+}
+
+func TestBadFrontMatterNotAtTop(t *testing.T) {
+	in := `
+Cook and mash @potato.
+
+---
+title: food dish
+---
+
+Mash @banana{1%large} and eat it.`
+
+	r, err := NewParserV2(&ParseV2Config{}).ParseString(in)
+	if err != nil {
+		t.Error("unexpected parsing error")
+		t.FailNow()
+	} else {
+		if len(r.Metadata) != 0 {
+			t.Error("got metadata when expected none")
+		}
 	}
 }
