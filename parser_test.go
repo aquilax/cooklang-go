@@ -433,3 +433,24 @@ Mash @banana{1%large} and eat it.`
 		}
 	}
 }
+
+func TestBadFrontMatterNotAtTop(t *testing.T) {
+	in := `
+Cook and mash @potato.
+
+---
+title: food dish
+---
+
+Mash @banana{1%large} and eat it.`
+
+	r, err := NewParserV2(&ParseV2Config{}).ParseString(in)
+	if err != nil {
+		t.Error("unexpected parsing error")
+		t.FailNow()
+	} else {
+		if len(r.Metadata) != 0 {
+			t.Error("got metadata when expected none")
+		}
+	}
+}

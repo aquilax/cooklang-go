@@ -188,6 +188,7 @@ type RecipeV2 struct {
 type ParserV2 struct {
 	config        *ParseV2Config
 	inFrontMatter bool
+	pastFirstLine bool
 	frontMatter   strings.Builder
 }
 
@@ -326,7 +327,7 @@ func (p *ParserV2) parseLine(line string, recipe *RecipeV2) error {
 	// header/footer
 	rightTrimmedLine := strings.TrimRight(line, " ")
 
-	if rightTrimmedLine == "---" && !p.inFrontMatter {
+	if !p.pastFirstLine && rightTrimmedLine == "---" && !p.inFrontMatter {
 		p.inFrontMatter = true
 	} else if rightTrimmedLine == "---" && p.inFrontMatter {
 		p.inFrontMatter = false
@@ -359,6 +360,7 @@ func (p *ParserV2) parseLine(line string, recipe *RecipeV2) error {
 		}
 		recipe.Steps = append(recipe.Steps, *step)
 	}
+	p.pastFirstLine = true
 	return nil
 }
 
