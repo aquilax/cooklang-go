@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "tests": {
     "testBasicDirection": {
       "source": "Add a bit of chilli\n",
@@ -35,13 +35,7 @@
             },
             {
               "type": "text",
-              "value": " "
-            }
-          ],
-          [
-            {
-              "type": "text",
-              "value": "and some text"
+              "value": "  and some text"
             }
           ]
         ],
@@ -480,7 +474,7 @@
       }
     },
     "testMetadata": {
-      "source": ">> sourced: babooshka\n",
+      "source": "---\nsourced: babooshka\n---\n",
       "result": {
         "steps": [],
         "metadata": {
@@ -489,13 +483,13 @@
       }
     },
     "testMetadataBreak": {
-      "source": "hello >> sourced: babooshka\n",
+      "source": "hello ---\nsourced: babooshka\n---\n",
       "result": {
         "steps": [
           [
             {
               "type": "text",
-              "value": "hello >> sourced: babooshka"
+              "value": "hello --- sourced: babooshka ---"
             }
           ]
         ],
@@ -503,7 +497,7 @@
       }
     },
     "testMetadataMultiwordKey": {
-      "source": ">> cooking time: 30 mins\n",
+      "source": "---\ncooking time: 30 mins\n---\n",
       "result": {
         "steps": [],
         "metadata": {
@@ -512,7 +506,7 @@
       }
     },
     "testMetadataMultiwordKeyWithSpaces": {
-      "source": ">>cooking time    :30 mins\n",
+      "source": "---\ncooking time    :30 mins\n---\n",
       "result": {
         "steps": [],
         "metadata": {
@@ -541,7 +535,7 @@
       }
     },
     "testMultipleLines": {
-      "source": ">> Prep Time: 15 minutes\n>> Cook Time: 30 minutes\n",
+      "source": "---\nPrep Time: 15 minutes\nCook Time: 30 minutes\n---\n",
       "result": {
         "steps": [],
         "metadata": {
@@ -641,7 +635,7 @@
       }
     },
     "testServings": {
-      "source": ">> servings: 1|2|3\n",
+      "source": "---\nservings: 1|2|3\n---\n",
       "result": {
         "steps": [],
         "metadata": {
