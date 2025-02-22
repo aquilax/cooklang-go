@@ -77,19 +77,15 @@ func TestCanonical(t *testing.T) {
 		"testSingleWordIngredientWithPunctuation",
 		"testSingleWordTimer",
 		"testSingleWordTimerWithUnicodePunctuation",
-		"testInvalidSingleWordIngredient",
-		"testInvalidMultiWordIngredient",
 		"testMultiWordIngredientNoAmount",
 		"testEquipmentQuantityOneWord",
 		"testQuantityDigitalString",
 		"testCookwareWithUnicodeWhitespace",
 		"testFractionsLike",
 		"testIngredientWithUnicodeWhitespace",
-		"testInvalidMultiWordTimer",
 		"testSingleWordTimerWithPunctuation",
 		"testIngredientMultipleWordsWithLeadingNumber",
 		"testIngredientNoUnitsNotOnlyString",
-		"testInvalidMultiWordCookware",
 	}
 	for name, spec := range (*specs).Tests {
 		name := name
