@@ -225,14 +225,14 @@ type ParserV2 struct {
 func (r Recipe) String() string {
 	var sb strings.Builder
 	for k, v := range r.Metadata {
-		sb.WriteString(fmt.Sprintf("%s %s: %s\n", metadataLinePrefix, k, v))
+		fmt.Fprintf(&sb, "%s %s: %s\n", metadataLinePrefix, k, v)
 	}
 	if len(r.Metadata) > 0 {
 		sb.WriteString("\n")
 	}
 	steps := len(r.Steps)
 	for i, s := range r.Steps {
-		sb.WriteString(fmt.Sprintln(s.Directions))
+		fmt.Fprintln(&sb, s.Directions)
 		if i != steps-1 {
 			sb.WriteString("\n")
 		}
