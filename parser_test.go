@@ -491,6 +491,16 @@ func TestFrontMatterWhenReusingParser(t *testing.T) {
 	}
 }
 
+func TestParserV2NilConfig(t *testing.T) {
+	recipe, err := NewParserV2(nil).ParseString("Add @salt{}.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(recipe.Steps) != 1 || len(recipe.Steps[0]) != 3 {
+		t.Fatalf("got recipe steps %#v, want two text items and one ingredient", recipe.Steps)
+	}
+}
+
 func TestBadFrontMatter(t *testing.T) {
 	in := `---   
 title: food dish

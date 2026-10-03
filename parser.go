@@ -275,6 +275,9 @@ func (p *ParserV2) ParseString(s string) (*RecipeV2, error) {
 }
 
 func NewParserV2(config *ParseV2Config) *ParserV2 {
+	if config == nil {
+		config = &ParseV2Config{}
+	}
 	return &ParserV2{
 		config: config,
 	}
