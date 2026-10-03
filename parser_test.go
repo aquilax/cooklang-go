@@ -476,6 +476,43 @@ Mash @banana{1%large} and eat it.`
 	}
 }
 
+func TestUnterminatedFrontMatter(t *testing.T) {
+	in := "---\ntitle: food dish\n"
+
+	_, err := NewParserV2(&ParseV2Config{}).ParseString(in)
+	if err == nil {
+		t.Fatal("expected an error for unterminated front matter")
+	}
+	if !strings.Contains(err.Error(), "unterminated yaml front matter") {
+		t.Errorf("error = %q, want an unterminated front matter error", err)
+	}
+}
+
+func TestFrontMatterWhenReusingParser(t *testing.T) {
+	parser := NewParserV2(&ParseV2Config{})
+	if _, err := parser.ParseString("First recipe."); err != nil {
+		t.Fatal(err)
+	}
+
+	recipe, err := parser.ParseString("---\ntitle: second recipe\n---\nSecond recipe.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if recipe.Metadata["title"] != "second recipe" {
+		t.Errorf("title = %v, want %q", recipe.Metadata["title"], "second recipe")
+	}
+}
+
+func TestParserV2NilConfig(t *testing.T) {
+	recipe, err := NewParserV2(nil).ParseString("Add @salt{}.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(recipe.Steps) != 1 || len(recipe.Steps[0]) != 3 {
+		t.Fatalf("got recipe steps %#v, want two text items and one ingredient", recipe.Steps)
+	}
+}
+
 func TestBadFrontMatter(t *testing.T) {
 	in := `---   
 title: food dish

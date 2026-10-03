@@ -225,14 +225,14 @@ type ParserV2 struct {
 func (r Recipe) String() string {
 	var sb strings.Builder
 	for k, v := range r.Metadata {
-		sb.WriteString(fmt.Sprintf("%s %s: %s\n", metadataLinePrefix, k, v))
+		fmt.Fprintf(&sb, "%s %s: %s\n", metadataLinePrefix, k, v)
 	}
 	if len(r.Metadata) > 0 {
 		sb.WriteString("\n")
 	}
 	steps := len(r.Steps)
 	for i, s := range r.Steps {
-		sb.WriteString(fmt.Sprintln(s.Directions))
+		fmt.Fprintln(&sb, s.Directions)
 		if i != steps-1 {
 			sb.WriteString("\n")
 		}
@@ -275,6 +275,9 @@ func (p *ParserV2) ParseString(s string) (*RecipeV2, error) {
 }
 
 func NewParserV2(config *ParseV2Config) *ParserV2 {
+	if config == nil {
+		config = &ParseV2Config{}
+	}
 	return &ParserV2{
 		config: config,
 	}
@@ -305,6 +308,10 @@ func ParseStream(s io.Reader) (*Recipe, error) {
 
 // ParseStream parses a cooklang recipe text stream and returns the recipe or an error
 func (p *ParserV2) ParseStream(s io.Reader) (*RecipeV2, error) {
+	p.inFrontMatter = false
+	p.pastFirstLine = false
+	p.frontMatter.Reset()
+
 	scanner := bufio.NewScanner(s)
 	recipe := RecipeV2{
 		make([]StepV2, 0),
@@ -323,7 +330,13 @@ func (p *ParserV2) ParseStream(s io.Reader) (*RecipeV2, error) {
 			}
 		}
 	}
-	return &recipe, scanner.Err()
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	if p.inFrontMatter {
+		return nil, fmt.Errorf("unterminated yaml front matter: missing closing delimiter")
+	}
+	return &recipe, nil
 }
 
 func parseLine(line string, recipe *Recipe) error {
