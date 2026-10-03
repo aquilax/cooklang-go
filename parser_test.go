@@ -476,6 +476,18 @@ Mash @banana{1%large} and eat it.`
 	}
 }
 
+func TestUnterminatedFrontMatter(t *testing.T) {
+	in := "---\ntitle: food dish\n"
+
+	_, err := NewParserV2(&ParseV2Config{}).ParseString(in)
+	if err == nil {
+		t.Fatal("expected an error for unterminated front matter")
+	}
+	if !strings.Contains(err.Error(), "unterminated yaml front matter") {
+		t.Errorf("error = %q, want an unterminated front matter error", err)
+	}
+}
+
 func TestFrontMatterWhenReusingParser(t *testing.T) {
 	parser := NewParserV2(&ParseV2Config{})
 	if _, err := parser.ParseString("First recipe."); err != nil {

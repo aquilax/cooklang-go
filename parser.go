@@ -330,7 +330,13 @@ func (p *ParserV2) ParseStream(s io.Reader) (*RecipeV2, error) {
 			}
 		}
 	}
-	return &recipe, scanner.Err()
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	if p.inFrontMatter {
+		return nil, fmt.Errorf("unterminated yaml front matter: missing closing delimiter")
+	}
+	return &recipe, nil
 }
 
 func parseLine(line string, recipe *Recipe) error {
