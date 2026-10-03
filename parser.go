@@ -17,14 +17,16 @@ import (
 )
 
 const (
-	commentsLinePrefix     = "--"
-	metadataLinePrefix     = ">>"
-	metadataValueSeparator = ":"
-	prefixIngredient       = '@'
-	prefixCookware         = '#'
-	prefixTimer            = '~'
-	prefixBlockComment     = '['
-	prefixInlineComment    = '-'
+	commentsLinePrefix       = "--"
+	metadataLinePrefix       = ">>"
+	metadataValueSeparator   = ":"
+	prefixIngredient         = '@'
+	prefixOptionalIngredient = '?'
+	prefixOptionalCookware   = '?'
+	prefixCookware           = '#'
+	prefixTimer              = '~'
+	prefixBlockComment       = '['
+	prefixInlineComment      = '-'
 
 	ItemTypeText       ItemType = "text"
 	ItemTypeComment    ItemType = "comment"
@@ -48,12 +50,14 @@ type Cookware struct {
 	Name        string  // cookware name
 	Quantity    float64 // quantity of the cookware
 	QuantityRaw string  // quantity of the cookware as raw text
+	Optional    bool    `json:"Optional,omitempty"` // true if the cookware is optional
 }
 
 type CookwareV2 struct {
 	Type     ItemType `json:"type"`
 	Name     string   `json:"name"`
 	Quantity float64  `json:"quantity"`
+	Optional bool     `json:"optional,omitempty"`
 }
 
 func (c Cookware) asCookwareV2() CookwareV2 {
@@ -61,6 +65,7 @@ func (c Cookware) asCookwareV2() CookwareV2 {
 		Type:     ItemTypeCookware,
 		Name:     c.Name,
 		Quantity: c.Quantity,
+		Optional: c.Optional,
 	}
 }
 
@@ -74,24 +79,49 @@ type IngredientAmount struct {
 
 // Ingredient represents a recipe ingredient
 type Ingredient struct {
-	Name   string           // name of the ingredient
-	Amount IngredientAmount // optional ingredient amount (default: 1)
+	Name     string           // name of the ingredient
+	Amount   IngredientAmount // optional ingredient amount (default: 1)
+	Optional bool             `json:"Optional,omitempty"` // true if the ingredient is optional
 }
 
 type IngredientV2 struct {
-	Type     ItemType `json:"type"`
-	Name     string   `json:"name"`
-	Quantity float64  `json:"quantity"`
-	Units    string   `json:"units,omitempty"`
+	Type         ItemType `json:"type"`
+	Name         string   `json:"name"`
+	Quantity     float64  `json:"quantity"`
+	Units        string   `json:"units,omitempty"`
+	Optional     bool     `json:"optional,omitempty"`
+	quantityText string
 }
 
 func (i Ingredient) asIngredientV2() IngredientV2 {
-	return IngredientV2{
+	result := IngredientV2{
 		Type:     ItemTypeIngredient,
 		Name:     i.Name,
 		Quantity: i.Amount.Quantity,
 		Units:    i.Amount.Unit,
+		Optional: i.Optional,
 	}
+	if !i.Amount.IsNumeric {
+		result.quantityText = i.Amount.QuantityRaw
+		if result.quantityText == "" {
+			result.quantityText = "some"
+		}
+	}
+	return result
+}
+
+func (i IngredientV2) MarshalJSON() ([]byte, error) {
+	quantity := any(i.Quantity)
+	if i.quantityText != "" {
+		quantity = i.quantityText
+	}
+	return json.Marshal(struct {
+		Type     ItemType `json:"type"`
+		Name     string   `json:"name"`
+		Quantity any      `json:"quantity"`
+		Units    string   `json:"units,omitempty"`
+		Optional bool     `json:"optional,omitempty"`
+	}{i.Type, i.Name, quantity, i.Units, i.Optional})
 }
 
 // Timer represents a time duration
@@ -270,7 +300,7 @@ func ParseStream(s io.Reader) (*Recipe, error) {
 			}
 		}
 	}
-	return &recipe, nil
+	return &recipe, scanner.Err()
 }
 
 // ParseStream parses a cooklang recipe text stream and returns the recipe or an error
@@ -293,7 +323,7 @@ func (p *ParserV2) ParseStream(s io.Reader) (*RecipeV2, error) {
 			}
 		}
 	}
-	return &recipe, nil
+	return &recipe, scanner.Err()
 }
 
 func parseLine(line string, recipe *Recipe) error {
@@ -398,7 +428,7 @@ func parseStepCB(line string, cb func(item any) (bool, error)) (string, error) {
 		}
 		if ch == prefixIngredient {
 			nextRune := peek(line[index+1:])
-			if nextRune != ' ' {
+			if nextRune != ' ' && (nextRune != prefixOptionalIngredient || peek(line[index+2:]) != ' ') {
 				if buffer.Len() > 0 {
 					if stop, err := cb(newText(buffer.String())); err != nil || stop {
 						return directions.String(), err
@@ -421,7 +451,7 @@ func parseStepCB(line string, cb func(item any) (bool, error)) (string, error) {
 		}
 		if ch == prefixCookware {
 			nextRune := peek(line[index+1:])
-			if nextRune != ' ' {
+			if nextRune != ' ' && (nextRune != prefixOptionalCookware || peek(line[index+2:]) != ' ') {
 				if buffer.Len() > 0 {
 					if stop, err := cb(newText(buffer.String())); err != nil || stop {
 						return directions.String(), err
@@ -660,15 +690,19 @@ func findNodeEndIndex(line string) int {
 }
 
 func getIngredientFromRawString(s string) (*Ingredient, error) {
+	optional := strings.HasPrefix(s, "?")
+	if optional {
+		s = s[1:]
+	}
 	index := strings.Index(s, "{")
 	if index == -1 {
-		return &Ingredient{Name: s, Amount: IngredientAmount{Quantity: 1}}, nil
+		return &Ingredient{Name: s, Amount: IngredientAmount{Quantity: 1}, Optional: optional}, nil
 	}
 	amount, err := getAmount(s[index+1:len(s)-1], 0)
 	if err != nil {
 		return nil, err
 	}
-	return &Ingredient{Name: s[:index], Amount: *amount}, nil
+	return &Ingredient{Name: s[:index], Amount: *amount, Optional: optional}, nil
 }
 
 func getAmount(s string, defaultValue float64) (*IngredientAmount, error) {
@@ -691,15 +725,19 @@ func getAmount(s string, defaultValue float64) (*IngredientAmount, error) {
 }
 
 func getCookwareFromRawString(s string) (*Cookware, error) {
+	optional := strings.HasPrefix(s, "?")
+	if optional {
+		s = s[1:]
+	}
 	index := strings.Index(s, "{")
 	if index == -1 {
-		return &Cookware{Name: s, Quantity: 1}, nil
+		return &Cookware{Name: s, Quantity: 1, Optional: optional}, nil
 	}
 	amount, err := getAmount(s[index+1:len(s)-1], 1)
 	if err != nil {
 		return nil, err
 	}
-	return &Cookware{Name: s[:index], Quantity: amount.Quantity, IsNumeric: amount.IsNumeric, QuantityRaw: amount.QuantityRaw}, nil
+	return &Cookware{Name: s[:index], Quantity: amount.Quantity, IsNumeric: amount.IsNumeric, QuantityRaw: amount.QuantityRaw, Optional: optional}, nil
 }
 
 func getTimerFromRawString(s string) (*Timer, error) {

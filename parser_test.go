@@ -1,10 +1,72 @@
 package cooklang
 
 import (
+	"encoding/json"
 	"reflect"
 	"strings"
 	"testing"
 )
+
+func TestOptionalItems(t *testing.T) {
+	recipe, err := ParseString("Season with @?chives and @?chilli flakes{1%pinch}. Use a #?splatter guard{} if you have one.\n" +
+		"Stir @parmesan{100%g} into the sauce.\n" +
+		"Top with extra @?parmesan{50%g} before serving.\n" +
+		"Add @?./sauces/chimichurri{} if available.\n" +
+		"@? thyme is plain text. Did you add the @salt{}?")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(recipe.Steps) != 5 {
+		t.Fatalf("got %d steps, want 5", len(recipe.Steps))
+	}
+	first := recipe.Steps[0]
+	if first.Directions != "Season with chives and chilli flakes. Use a splatter guard if you have one." {
+		t.Errorf("unexpected directions: %q", first.Directions)
+	}
+	if len(first.Ingredients) != 2 || !first.Ingredients[0].Optional || first.Ingredients[0].Name != "chives" {
+		t.Errorf("unexpected optional single-word ingredient: %#v", first.Ingredients)
+	}
+	if ingredient := first.Ingredients[1]; ingredient.Name != "chilli flakes" || !ingredient.Optional || ingredient.Amount.Quantity != 1 || ingredient.Amount.Unit != "pinch" {
+		t.Errorf("unexpected optional multi-word ingredient: %#v", ingredient)
+	}
+	if len(first.Cookware) != 1 || first.Cookware[0].Name != "splatter guard" || !first.Cookware[0].Optional {
+		t.Errorf("unexpected optional cookware: %#v", first.Cookware)
+	}
+	if ingredient := recipe.Steps[1].Ingredients[0]; ingredient.Optional || ingredient.Amount.Quantity != 100 {
+		t.Errorf("unexpected required parmesan: %#v", ingredient)
+	}
+	if ingredient := recipe.Steps[2].Ingredients[0]; !ingredient.Optional || ingredient.Amount.Quantity != 50 {
+		t.Errorf("unexpected optional parmesan: %#v", ingredient)
+	}
+	if ingredient := recipe.Steps[3].Ingredients[0]; ingredient.Name != "./sauces/chimichurri" || !ingredient.Optional {
+		t.Errorf("unexpected optional recipe reference: %#v", ingredient)
+	}
+	if got := recipe.Steps[4].Directions; got != "@? thyme is plain text. Did you add the salt?" {
+		t.Errorf("unexpected non-marker directions: %q", got)
+	}
+
+	parser := NewParserV2(&ParseV2Config{})
+	v2Recipe, err := parser.ParseString("Use @?chives and #?guard{}.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(v2Recipe.Steps[0]) != 5 {
+		t.Fatalf("got %d V2 items, want 5", len(v2Recipe.Steps[0]))
+	}
+	optionalIngredient := v2Recipe.Steps[0][1].(IngredientV2)
+	optionalCookware := v2Recipe.Steps[0][3].(CookwareV2)
+	if !optionalIngredient.Optional || !optionalCookware.Optional {
+		t.Errorf("V2 optionality was not preserved: %#v %#v", optionalIngredient, optionalCookware)
+	}
+	jsonBytes, err := json.Marshal(v2Recipe)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(jsonBytes), `"optional":true`) {
+		t.Errorf("V2 JSON omitted optional markers: %s", jsonBytes)
+	}
+}
 
 func TestParseString(t *testing.T) {
 	tests := []struct {
