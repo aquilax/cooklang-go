@@ -305,6 +305,10 @@ func ParseStream(s io.Reader) (*Recipe, error) {
 
 // ParseStream parses a cooklang recipe text stream and returns the recipe or an error
 func (p *ParserV2) ParseStream(s io.Reader) (*RecipeV2, error) {
+	p.inFrontMatter = false
+	p.pastFirstLine = false
+	p.frontMatter.Reset()
+
 	scanner := bufio.NewScanner(s)
 	recipe := RecipeV2{
 		make([]StepV2, 0),

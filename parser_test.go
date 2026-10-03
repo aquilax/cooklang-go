@@ -476,6 +476,21 @@ Mash @banana{1%large} and eat it.`
 	}
 }
 
+func TestFrontMatterWhenReusingParser(t *testing.T) {
+	parser := NewParserV2(&ParseV2Config{})
+	if _, err := parser.ParseString("First recipe."); err != nil {
+		t.Fatal(err)
+	}
+
+	recipe, err := parser.ParseString("---\ntitle: second recipe\n---\nSecond recipe.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if recipe.Metadata["title"] != "second recipe" {
+		t.Errorf("title = %v, want %q", recipe.Metadata["title"], "second recipe")
+	}
+}
+
 func TestBadFrontMatter(t *testing.T) {
 	in := `---   
 title: food dish
